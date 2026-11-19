@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>[STAGING] BTB3 Schedule Checker</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f6f9;--card:#fff;--ink:#14202e;--mut:#5b6878;--line:#dde3eb;--acc:#0e7c7b;--accink:#fff;--rail:#10233f;--railink:#c9d4e6;
+--yel:#fff1a6;--org:#ffe0bd;--red:#fbd3d3;--grn:#d8f0df;--ytxt:#14202e;--kok:#2e9e5b;--kyel:#d4a300;--korg:#e07b1f;--kred:#d33}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.rail{background:var(--rail);color:var(--railink);padding:22px 14px;position:sticky;top:0;align-self:start;height:100vh;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;gap:11px;align-items:center;padding:0 8px}
+.mark{width:36px;height:36px;border-radius:9px;background:var(--acc);color:var(--accink);display:grid;place-items:center;font-weight:700;font-size:14px;letter-spacing:-.02em}
+.brand b{display:block;color:#fff;font-size:15px;font-weight:600;line-height:1.2}.brand small{font-size:12px;color:var(--railink)}
+.tabs{display:flex;flex-direction:column;gap:2px}
+.tabs button{all:unset;box-sizing:border-box;cursor:pointer;padding:10px 12px;border-radius:7px;font-size:14px;font-weight:500;color:var(--railink);border-left:3px solid transparent;transition:background .15s}
+.tabs button:hover{background:rgba(255,255,255,.07);color:#fff}
+.tabs button:focus-visible{outline:2px solid #fff}
+.tabs button.on{background:rgba(255,255,255,.11);color:#fff;border-left-color:var(--acc)}
+.rail-note{margin:auto 8px 0;font-size:12px;line-height:1.45;color:var(--railink);opacity:.8}
+main{padding:28px 32px 64px;max-width:1180px;width:100%}
+.wb{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:20px;transition:border-color .15s}
+.wb.drag{border-color:var(--acc);border-style:dashed}
+.wb b{display:block;font-size:14px}.wb #msg{font-size:13px}
+.wb>div{flex:1 1 280px;min-width:0}
+input[type=file]{font:inherit;font-size:13px;color:var(--mut);max-width:100%}
+input[type=file]::file-selector-button{background:var(--acc);color:var(--accink);border:0;border-radius:6px;padding:8px 14px;font:inherit;font-weight:600;margin-right:12px;cursor:pointer}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px 26px}
+h2{font-size:22px;font-weight:650;letter-spacing:-.015em;margin:0 0 4px;line-height:1.25}
+h3{margin:26px 0 10px;font-size:15px;font-weight:600}
+.lede{color:var(--mut);margin:0 0 18px;max-width:72ch}.mut{color:var(--mut)}.hide{display:none!important}
+.stats{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0 18px}
+.stats:empty{display:none}
+.stat{position:relative;padding:11px 22px;min-width:116px;font-size:12.5px;color:var(--mut);border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat::before{content:"";position:absolute;left:0;top:11px;bottom:11px;width:3px;border-radius:0 2px 2px 0;background:var(--k,transparent)}
+.stat b{display:block;font-size:22px;font-weight:600;line-height:1.2;color:var(--ink);font-variant-numeric:tabular-nums}
+.stat.ok{--k:var(--kok)}.stat.yel{--k:var(--kyel)}.stat.org{--k:var(--korg)}.stat.red{--k:var(--kred)}
+.blk{display:flex;gap:6px 14px;align-items:center;flex-wrap:wrap}.blk label{display:flex;gap:6px;align-items:center}.blk input{accent-color:var(--acc)}
+.pill{display:inline-flex;align-items:flex-start;gap:7px;font-weight:600;font-size:12.5px;line-height:1.35}
+.pill::before{content:"";flex:none;width:8px;height:8px;margin-top:5px;border-radius:50%;background:var(--k,var(--mut))}
+.pill.ok{--k:var(--kok)}.pill.yel{--k:var(--kyel)}.pill.org{--k:var(--korg)}.pill.red{--k:var(--kred)}
+th.n,td.n{text-align:right}
+@media print{
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .rail,.wb,.bar,#blkBar,.okn,.stats,summary{display:none!important}
+ .shell{display:block}main{padding:0;max-width:none}.panel{border:0;padding:0}body{background:#fff}
+ h2{font-size:18px}.lede{display:none}
+ #scGrids .wrap,#tcOut .wrap{break-inside:avoid;margin-bottom:10px}
+ #scGrids .wrap{break-after:page}
+}
+@property --p{syntax:'<number>';inherits:false;initial-value:0}
+::selection{background:color-mix(in srgb,var(--acc) 28%,transparent)}
+.tabs button{display:flex;align-items:center;gap:10px}
+.tabs button svg{flex:none;opacity:.85}
+.wb{position:sticky;top:10px;z-index:5;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 20px -12px rgba(16,35,63,.35)}
+.panel{border-radius:12px;box-shadow:0 1px 2px rgba(16,35,63,.05),0 12px 28px -18px rgba(16,35,63,.22);animation:rise .28s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
+.ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:20px}
+.ov:empty{display:none}
+.tile{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:transform .15s,border-color .15s,box-shadow .15s}
+.tile:hover{transform:translateY(-2px);border-color:var(--k);box-shadow:0 10px 24px -16px rgba(16,35,63,.4)}
+.tile:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.tile b{display:block;font-size:15px;font-weight:600}.tile small{display:block;font-size:12.5px;color:var(--mut);margin-top:2px}
+.ring{--p:0;flex:none;position:relative;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--k) calc(var(--p)*1%),var(--line) 0);animation:fill .9s ease-out}
+@keyframes fill{from{--p:0}}
+.ring::before{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--card)}
+.ring span{position:relative;font-size:14px;font-weight:650;font-variant-numeric:tabular-nums}
+.tile.ok{--k:var(--kok)}.tile.yel{--k:var(--kyel)}.tile.org{--k:var(--korg)}.tile.red{--k:var(--kred)}
+table:not(.xl) td{transition:box-shadow .12s}
+table:not(.xl) tr:hover td{box-shadow:inset 0 0 0 999px rgba(16,35,63,.045)}
+.wrap{scrollbar-width:thin}
+@media(prefers-reduced-motion:reduce){.panel,.ring{animation:none}.tile{transition:none}}
+@media print{.ov{display:none!important}}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:12px;padding:1px 9px;margin:2px 5px 2px 0;font-size:12px;white-space:nowrap}
+.auth{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:16px}
+.authbox{width:min(390px,100%);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px;display:grid;gap:12px}
+.authbox h2{margin:6px 0 0}.authbox .lede{margin:0}
+.authbox label{display:grid;gap:4px;font-size:13px;color:var(--mut)}
+.authbox input{height:38px;font:inherit;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
+.authbtn{display:flex;gap:10px;margin-top:4px}.authbtn .btn{flex:1}
+.btn{height:36px;padding:0 14px;border-radius:6px;border:1px solid var(--acc);background:var(--acc);color:var(--accink);font:inherit;font-weight:600;cursor:pointer}
+.eb{display:flex;gap:10px 12px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:10px;padding:10px 14px;margin:0 0 18px;font-size:13.5px}
+.eb span{flex:1 1 360px}.eb .btn[disabled]{opacity:.45;cursor:default}
+.xl td.drag{cursor:grab;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.xl hr.stack{border:0;border-top:1px dashed #d33;margin:4px 0}.xl td.dragging{opacity:.4}
+.xl td.okdrop{outline:3px solid var(--kok);outline-offset:-3px}.xl td.nodrop{outline:3px solid var(--kred);outline-offset:-3px}
+.adgrid{display:grid;grid-template-columns:minmax(280px,440px) 1fr;gap:20px;margin:16px 0 8px}
+.adbox{border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px;align-content:start;font-size:13.5px}
+.adbox label{display:grid;gap:4px;font-size:13px;color:var(--mut)}
+.adbox input[type=text],.adbox select{width:100%}
+.pwrow{display:flex;gap:8px}.pwrow input{flex:1;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips .chipc{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 6px 3px 12px;font-weight:600;font-size:13px}
+.chips .chipc button{all:unset;cursor:pointer;color:var(--mut);padding:0 6px;border-radius:50%;line-height:1.3}
+.chips .chipc button:hover{color:#b42318;background:var(--bg)}
+.hist td{vertical-align:top}.hist .when{white-space:nowrap;color:var(--mut)}
+.adnote{margin:12px 0 0;padding:11px 16px;border:1px solid var(--line);border-left:4px solid var(--kok);border-radius:8px;font-size:13.5px}
+.adnote.err{border-left-color:var(--kred)}
+#adUsers:has(table){border:1px solid var(--line);border-radius:8px}
+#adUsers select{height:30px;font-size:13px}
+@media(max-width:860px){.adgrid{grid-template-columns:1fr}}
+.btn.danger{color:#b42318;border-color:#b42318}
+.btn.ghost{background:transparent;color:var(--acc)}
+.who{margin:auto 8px 0;display:grid;gap:2px;font-size:13px;color:#fff}.who small{color:var(--railink);margin-bottom:8px}
+.who .btn{height:32px;border-color:rgba(255,255,255,.4);color:#fff}
+.rail-note{margin-top:14px!important}
+.okn{margin:0 0 18px;padding:11px 16px;border:1px solid var(--line);border-left:4px solid var(--kok);border-radius:8px;font-size:13.5px}
+.bar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:6px 0 4px;font-size:13.5px;color:var(--mut)}
+.bar label{display:flex;gap:8px;align-items:center}
+select,input[type=text]{font:inherit;font-size:13.5px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
+select:hover,input[type=text]:hover{border-color:var(--mut)}
+.wrap{overflow-x:auto}
+#tsOut:has(table),#scOut:has(table){border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:12.5px;white-space:nowrap}
+tbody tr:last-child td,table>tr:last-child td{border-bottom:0}
+tr.yel td{background:var(--yel);color:var(--ytxt)}tr.org td{background:var(--org);color:var(--ytxt)}tr.red td{background:var(--red);color:var(--ytxt)}tr.grn td{background:var(--grn);color:var(--ytxt)}
+details{margin-top:4px}summary{cursor:pointer;color:var(--acc);font-size:13px}
+.xl{border-collapse:collapse;width:100%;min-width:640px;margin:0 0 6px;font-size:12.5px;table-layout:fixed}
+.xl td,.xl th{border:1px solid var(--mut);padding:5px 7px;text-align:center;vertical-align:middle;height:46px;background:var(--card);color:var(--ink)}
+.xl th{background:#333;color:#fff;font-weight:700;height:28px;font-size:12.5px}
+.xt th{background:#404040}
+.xl td.tm{font-weight:700;width:12%}
+.xl td.ttl{font-weight:700;font-size:14px;white-space:pre-line;height:auto}
+.xl td.lt{font-weight:700;height:26px}.xl td.sess{text-align:left;font-weight:700;height:26px}.xl td.ft{border:0;text-align:right;height:auto;font-size:12px;padding:1px 7px;background:transparent}
+.xl td.x{background-image:linear-gradient(to top right,transparent calc(50% - .75px),var(--mut) calc(50% - .75px),var(--mut) calc(50% + .75px),transparent calc(50% + .75px)),linear-gradient(to bottom right,transparent calc(50% - .75px),var(--mut) calc(50% - .75px),var(--mut) calc(50% + .75px),transparent calc(50% + .75px))}
+.xl td.yel{background-color:var(--yel);color:var(--ytxt)}.xl td.org{background-color:var(--org);color:var(--ytxt)}.xl td.red{background-color:var(--red);color:var(--ytxt);outline:2px solid #d33;outline-offset:-2px}
+.xl td.cfl{background:var(--red);color:var(--ytxt);text-align:left;font-weight:600;height:auto;padding:8px 10px}
+.xl td small{display:block;font-weight:700;color:#d33;margin-top:2px}
+@media(max-width:860px){
+ .shell{grid-template-columns:1fr}
+ .rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px 16px}
+ .tabs{flex-direction:row;overflow-x:auto;gap:4px;flex:1 1 100%}
+ .tabs button{border-left:0;border-bottom:3px solid transparent;white-space:nowrap;border-radius:7px 7px 0 0}
+ .tabs button.on{border-bottom-color:var(--acc)}
+ .rail-note{display:none}
+ main{padding:18px 14px 48px}.panel{padding:18px 14px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div style="position:fixed;left:0;right:0;top:0;z-index:99999;background:#b42318;color:#fff;font:600 12px/22px sans-serif;text-align:center;letter-spacing:.04em">STAGING &#8211; test data only. Not the real system.</div><div id="auth" class="auth"><div class="authbox"><span class="mark">B3</span><h2>Schedule Checker</h2><p class="lede" id="authMsg">Sign in to continue. Ask your administrator if you need an account.</p>
+<label>Username<input id="aMail" type="text" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+<label>Password<input id="aPass" type="password" autocomplete="current-password"></label>
+<div class="authbtn"><button id="aIn" class="btn">Sign in</button></div></div></div>
+<div id="pwBox" class="auth hide"><div class="authbox"><h2>Change your password</h2><p class="lede" id="pwMsg">Enter your current password, then a new one.</p>
+<label>Current password<input id="pwCur" type="password" autocomplete="current-password"></label>
+<label>New password (8 characters or more)<input id="pwNew" type="password" autocomplete="new-password"></label>
+<label>New password again<input id="pwNew2" type="password" autocomplete="new-password"></label>
+<div class="authbtn"><button id="pwSave" class="btn" type="button">Save new password</button><button id="pwCancel" class="btn ghost" type="button">Close</button></div></div></div>
+<div class="shell">
+<aside class="rail">
+<div class="brand"><span class="mark">B3</span><div><b>Schedule Checker</b><small id="sem">Upload a workbook</small></div></div>
+<nav class="tabs" id="tabs"><button data-t="ts" class="on" aria-current="page"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Timesheets</button><button data-t="tc"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Teacher Schedules</button><button data-t="sc"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedules</button><button data-t="hr"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Homeroom</button><button data-t="ad" id="adTab" class="hide"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>Administrative</button></nav>
+<div class="who" id="who"></div>
+<p class="rail-note">Workbooks are stored privately in your school's Supabase project. Only signed-in staff can open them.</p>
+</aside>
+<main>
+<div class="wb" id="wb"><div><b>Workbook</b><span id="msg" class="mut">No file loaded. Drop an .xlsx here or choose one.</span></div><input type="file" id="f" accept=".xlsx,.xlsm"><button id="expBtn" class="btn ghost" title="Download all results as an Excel file">Download report (Excel)</button><button id="expWb" class="btn ghost hide" title="The original workbook with the arranged schedule written into it">Download arranged workbook</button></div>
+<div class="wb hide" id="semBar"><b>Semester</b><select id="semSel"></select><b>Campus</b><select id="campSel"><option>BTB1</option><option>BTB2</option><option>BTB3</option></select><button id="semNew" class="btn ghost hide">New semester</button><button id="saveUp" class="btn hide">Save this workbook to the semester</button></div>
+<div id="hist" style="margin:-8px 0 18px"></div>
+<div class="eb hide" id="editBar"><span id="editMsg"></span><button id="undoBtn" class="btn ghost">Undo last</button><button id="saveEdits" class="btn">Save changes</button><button id="discardEdits" class="btn ghost">Discard unsaved</button></div>
+<div class="ov" id="ov"></div>
+<section id="ts" class="panel"><h2>Timesheets</h2>
+<p class="lede">Teacher period hours (TIMESHEET) vs. total hours in the teacher's schedule, matched by teacher name. Mismatches are highlighted yellow. Homeroom periods are not counted here; they are listed in the Homeroom tab.</p>
+<div class="bar"><label>Period hours from <select id="mode"><option value="declared">Teaching hours/week</option><option value="counted">Periods counted in timesheet grid</option></select></label>
+<label><input type="checkbox" id="tsOnly"> Mismatches only</label></div>
+<div class="stats" id="tsStats"></div><div class="wrap" id="tsOut"><p class="mut">Upload the semester workbook above to begin.</p></div></section>
+
+<section id="tc" class="panel hide"><h2>Teacher Schedules</h2>
+<p class="lede">Teacher schedules gathered and arranged by subject.</p>
+<div class="bar"><label>Subject <select id="subSel"></select></label><input type="text" id="tcQ" placeholder="Search teacher"></div>
+<div id="tcOut"><p class="mut">Upload the semester workbook above to begin.</p></div></section>
+
+<section id="sc" class="panel hide"><h2>Schedules</h2>
+<p class="lede">Student class schedules (G7–G12) vs. teacher schedules. Matched on Teacher Name, Subject and Grade; day/time is used to flag slot differences. Also flags conflicts: a teacher in two classes at once, or a class with two teachers at once.</p>
+<div class="bar"><label>Grade <select id="scG"><option value="">All grades</option></select></label><label>Results list shows <select id="scF"><option value="issues">Issues only</option><option value="all">All periods</option></select></label><span id="blkBar" class="blk"></span></div>
+<div class="stats" id="scStats"></div><div id="scConf"></div><div id="scGrids"></div><h3>Check results</h3><div class="wrap" id="scOut"><p class="mut">Upload the semester workbook above to begin.</p></div>
+</section>
+<section id="hr" class="panel hide"><h2>Homeroom</h2>
+<p class="lede">Homeroom teachers are taken <b>only from the "Home room" column of the TIMESHEET</b>. A teacher with two classes is written like <b>6A/6B</b>. The teacher schedules are not used to decide who is a homeroom teacher, because they also hold homeroom periods of other campuses; they only supply the periods shown here. Homeroom periods overlap class lessons by design and are not counted in the Timesheet hours.</p>
+<div class="bar"><label>Class <select id="hrG"></select></label><label><input type="checkbox" id="hrOnly"> Issues only</label></div>
+<div class="stats" id="hrStats"></div><div class="wrap" id="hrOut"><p class="mut">Upload the semester workbook above to begin.</p></div></section>
+<section id="ad" class="panel hide"><h2>Administrative</h2>
+<p class="lede">Create staff accounts and choose what each person may do. Only administrators can see this tab.</p>
+<div class="adgrid">
+<div class="adbox"><h3 style="margin:0">Create a user</h3>
+<label>Username<input id="nuName" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="for example sophea"></label>
+<label>Full name (optional)<input id="nuFull" type="text" autocomplete="off"></label>
+<label>Role<select id="nuRole"><option value="viewer">Viewer: can only look</option><option value="registrar">Registrar: can also upload and save workbooks</option><option value="admin">Admin: everything, including this tab</option></select></label>
+<label>Password (at least 8 characters)<span class="pwrow"><input id="nuPass" type="text" autocomplete="off" spellcheck="false"><button id="nuGen" class="btn ghost" type="button">Generate</button></span></label>
+<button id="nuMake" class="btn" type="button">Create user</button>
+</div>
+<div class="adbox"><h3 style="margin:0">What each role can do</h3>
+<p style="margin:0"><b>Viewer</b>: opens the saved workbook of a semester and campus and sees every tab. Cannot change anything.</p>
+<p style="margin:0"><b>Registrar</b>: also chooses files, saves them to a semester, adds semesters, sees the saved list and can delete saved workbooks.</p>
+<p style="margin:0"><b>Admin</b>: everything a registrar can do, plus arranging the schedule by drag and drop, and managing users, campuses and the history here.</p>
+<p class="mut" style="margin:0;font-size:13px">The person signs in with the username and password you give them. Accounts can be disabled but not deleted, so saved work stays linked to a name.</p>
+</div></div>
+<div class="adbox" style="margin-top:20px"><h3 style="margin:0">Campuses</h3>
+<p class="mut" style="margin:0">These are the choices in the Campus box at the top of every page. Each campus keeps its own saved workbook inside a semester. The campus name is read from the workbook (for example "CKD Campus" or a file name like 11_CKD_...).</p>
+<div id="campList" class="chips"></div>
+<label>New campus<span class="pwrow"><input id="ncName" type="text" autocomplete="off" spellcheck="false" placeholder="for example CKD"><button id="ncAdd" class="btn" type="button">Add campus</button></span></label>
+</div>
+<div id="adMsg" class="adnote hide" aria-live="polite"></div>
+<h3>Users</h3><div class="wrap" id="adUsers"><p class="mut">Loading the users…</p></div>
+<h3>History</h3>
+<div class="bar"><label>Show <select id="hiF"><option value="">Everything</option><option value="schedule.">Schedule changes</option><option value="workbook.">Workbooks</option><option value="user.">User accounts</option><option value="campus.|semester.">Campuses and semesters</option><option value="password.">Passwords</option></select></label><button id="hiRef" class="btn ghost" type="button">Refresh</button></div>
+<div class="wrap" id="adHist"><p class="mut">Loading the history…</p></div></section>
+</main></div>
+<script>
+const $=id=>document.getElementById(id);
+const clean=s=>String(s==null?'':s).replace(/[\u200b-\u200d\ufeff]/g,'').replace(/\r/g,'').trim();
+const esc=s=>clean(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nName=s=>clean(s).toUpperCase().replace(/^(MR|MS|MRS|MISS|DR)\.?\s+/,'').replace(/\s+/g,' ');
+const nGrade=s=>clean(s).toUpperCase().replace(/^GRADE\s*/,'').replace(/\s+/g,' ');
+const nSub=s=>clean(s).toLowerCase().replace(/\s+/g,' ');
+const DAYS=['Mon','Tue','Wed','Thu','Fri'];
+let S=null;
+function grid(ws){ws['!ref']='A1:BZ400';return XLSX.utils.sheet_to_json(ws,{header:1,defval:null})}
+
+async function crossedCells(buf){
+ const z=await JSZip.loadAsync(buf);
+ const rd=async p=>{const f=z.file(p);return f?new DOMParser().parseFromString(await f.async('string'),'application/xml'):null};
+ const st=await rd('xl/styles.xml'),wbx=await rd('xl/workbook.xml'),rel=await rd('xl/_rels/workbook.xml.rels'),th=await rd('xl/theme/theme1.xml');
+ const on=v=>v==='1'||v==='true';
+ const pal=['lt1','dk1','lt2','dk2','accent1','accent2','accent3','accent4','accent5','accent6','hlink','folHlink'].map(n=>{
+  const e=th&&th.getElementsByTagName('a:'+n)[0],c=e&&e.getElementsByTagName('*')[0];return c?(c.getAttribute('lastClr')||c.getAttribute('val')):'000000'});
+ const tint=(hex,t)=>{const v=[0,2,4].map(k=>parseInt(hex.slice(k,k+2),16)/255),mx=Math.max(...v),mn=Math.min(...v),d=mx-mn;
+  let h=0,s=0,l=(mx+mn)/2;if(d){s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===v[0]?(v[1]-v[2])/d+(v[1]<v[2]?6:0):mx===v[1]?(v[2]-v[0])/d+2:(v[0]-v[1])/d+4;h/=6}
+  l=t<0?l*(1+t):l*(1-t)+t;const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+  const f=x=>{x=x<0?x+1:x>1?x-1:x;return x<1/6?p+(q-p)*6*x:x<.5?q:x<2/3?p+(q-p)*(2/3-x)*6:p};
+  const o=s?[f(h+1/3),f(h),f(h-1/3)]:[l,l,l];return'#'+o.map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('')};
+ const bord=[...st.getElementsByTagName('borders')[0].children].map(b=>{const d=b.getElementsByTagName('diagonal')[0];
+  return !!(d&&d.getAttribute('style')&&(on(b.getAttribute('diagonalUp'))||on(b.getAttribute('diagonalDown'))))});
+ const fills=[...st.getElementsByTagName('fills')[0].children].map(f=>{const pf=f.getElementsByTagName('patternFill')[0];
+  if(!pf||pf.getAttribute('patternType')!=='solid')return null;const fg=pf.getElementsByTagName('fgColor')[0];if(!fg)return null;
+  if(fg.getAttribute('rgb'))return'#'+fg.getAttribute('rgb').slice(-6);
+  if(fg.getAttribute('theme')!==null&&fg.getAttribute('theme')!=='')return tint(pal[+fg.getAttribute('theme')]||'000000',+fg.getAttribute('tint')||0);return null});
+ const fonts=[...st.getElementsByTagName('fonts')[0].children].map(f=>{const b=f.getElementsByTagName('b')[0];return !!b&&b.getAttribute('val')!=='0'});
+ const xf=[...st.getElementsByTagName('cellXfs')[0].children].map(x=>({x:bord[+x.getAttribute('borderId')||0],bg:fills[+x.getAttribute('fillId')||0],b:fonts[+x.getAttribute('fontId')||0],fid:+x.getAttribute('fillId')||0}));
+ const targets={};[...rel.getElementsByTagName('Relationship')].forEach(r=>targets[r.getAttribute('Id')]=r.getAttribute('Target'));
+ const out={};
+ for(const sh of wbx.getElementsByTagName('sheet')){
+  const t=targets[sh.getAttribute('r:id')];if(!t)continue;
+  const doc=await rd(t.startsWith('/')?t.slice(1):'xl/'+t);if(!doc)continue;
+  const m=new Map();[...doc.getElementsByTagName('c')].forEach(c=>{const sid=+c.getAttribute('s')||0,i=xf[sid];if(i)m.set(c.getAttribute('r'),{...i,s:sid})});
+  out[sh.getAttribute('name')]=m}
+ return out}
+
+const code=g=>nGrade(g).replace(/\s*#\d+$/,'').replace(/\s*\(.*\)/,'').trim();
+function mergeInfo(ws){const cs={},rs={},cov=new Set();(ws['!merges']||[]).forEach(m=>{const k=m.s.r+'|'+m.s.c;cs[k]=m.e.c-m.s.c+1;rs[k]=m.e.r-m.s.r+1;
+ for(let r=m.s.r;r<=m.e.r;r++)for(let c=m.s.c;c<=m.e.c;c++)if(r!==m.s.r||c!==m.s.c)cov.add(r+'|'+c)});return{cs,rs,cov}}
+function classify(wb){const stud=[],teach=[];
+ wb.SheetNames.forEach(n=>{if(n==='TIMESHEET'||/change log/i.test(n))return;let a=false,t=false;
+  grid(wb.Sheets[n]).forEach(r=>{const b=clean(r[1]);if(/Grade\s+.+\/\s*Room/i.test(b))a=true;if(/Instructor:/i.test(b))t=true});
+  if(t)teach.push(n);else if(a)stud.push(n)});
+ return{stud,teach}}
+function parseTeachers(wb,X,list){const out=[];
+ list.forEach(sn=>{let cur=null,title='',sy='';const xs=X[sn]||new Map(),MI=mergeInfo(wb.Sheets[sn]),mg=MI.cs;
+  const inf=(ri,c)=>xs.get(String.fromCharCode(65+c)+(ri+1))||{};
+  grid(wb.Sheets[sn]).forEach((r,ri)=>{const b=clean(r[1]);
+   if(/Teacher.?s Schedule/i.test(b)){title=b;sy='';cur=null;return}
+   if(!cur&&/^(School|Academic) Year/i.test(b)){sy=b;return}
+   const m=b.match(/Instructor:\s*(.+?)\s*\(Tel/i)||b.match(/Instructor:\s*(.+)$/i);
+   if(m){cur={subject:sn.replace(/^\d+-/,''),name:nName(m[1]),display:clean(m[1]).replace(/^(Mr|Ms|Mrs)\.?\s+/i,''),entries:[],crossed:new Set(),full:clean(m[1]),
+    title,sy,instr:b.replace(/\s+/g,' '),campus:clean(r[6]),campusBg:inf(ri,6).bg,rows:[]};out.push(cur);return}
+   if(!cur)return;
+   if(/^Lunch/i.test(b)){cur.rows.push({t:'lunch',label:b});return}
+   if(b==='Time'){cur.rows.push({t:'head'});return}
+   if(/^\d{1,2}:\d{2}/.test(b)){const cells=[];let brk=false;
+    for(let d=0;d<5;d++){const v=clean(r[2+d]),i=inf(ri,2+d),K=ri+'|'+(2+d);
+     if(i.x)cur.crossed.add(DAYS[d]+'|'+b);
+     cells.push({v,x:!!i.x,bg:i.bg,fid:i.fid,sid:i.s,cs:mg[K]>1?mg[K]:0,rs:MI.rs[K]>1?MI.rs[K]:0,skip:MI.cov.has(K),ref:sn+'!'+String.fromCharCode(67+d)+(ri+1)});
+     if(d===0&&/^break/i.test(v))brk=true;
+     if(v&&!/^break/i.test(v)){blocksOf(v).forEach(bv=>{const L=bv.split('\n').map(clean).filter(Boolean);cur.entries.push({day:DAYS[d],time:b,subject:L[0],grade:L[1]||'',campus:L[2]||'',ref:sn+'!'+String.fromCharCode(67+d)+(ri+1)})})}}
+    cur.rows.push({t:'row',time:b,tbg:inf(ri,1).bg,cells,brk});return}
+   if(cur.rows.length){const items=[],tot=/^Total Hours/i.test(b);let c=1;
+    while(c<=6){const v=tot&&c===2?'__TOT__':clean(r[c]),i=inf(ri,c);let span=mg[ri+'|'+c]||1;
+     if(span===1&&v&&v!=='__TOT__')while(c+span<=6&&!clean(r[c+span])&&!mg[ri+'|'+(c+span)]&&!(tot&&c+span===2))span++;
+     items.push({v,span,bg:i.bg,bold:!!i.b,al:c>=5?'center':'left'});c+=span}
+    if(items.some(x=>(x.v&&x.v!=='__TOT__')||x.bg))cur.rows.push({t:'foot',items})}
+  })});return out}
+
+function parseTimesheet(wb){const rows=grid(wb.Sheets['TIMESHEET']),out=[];let last=null;
+ let hi=rows.findIndex(r=>/^name$/i.test(clean(r[3])));if(hi<0)hi=10;
+ const H=rows[hi]||[],find=re=>H.findIndex(v=>re.test(clean(v)));
+ let hc=find(/teaching\s*hours/i);if(hc<0)hc=8;
+ const homeC=find(/home/i),phoneC=find(/phone/i),statC=find(/status/i),subC=find(/^subject$/i);
+ const body=[];for(let i=hi+1;i<rows.length;i++){const r=rows[i];if(/resi|registrar/i.test(clean(r[1])))break;body.push([i,r])}
+ const num=[0,0];body.forEach(([i,r])=>{for(let k=0;k<2;k++)if(Number(r[hc+k])>0)num[k]++});
+ const dc=num[1]>0?hc+1:hc;let gridTotal=0;
+ body.forEach(([i,r])=>{const name=clean(r[3]),cnt=r.slice(15,55).filter(v=>clean(v)).length;gridTotal+=cnt;
+  if(name&&!/^name$/i.test(name)){last={row:i+1,id:clean(r[2]),name:nName(name),display:name,subject:clean(r[subC>=0?subC:6]),declared:Number(r[dc])||0,counted:cnt,
+   hr:homeC>=0?clean(r[homeC]):'',phone:phoneC>=0?clean(r[phoneC]):'',status:statC>=0?clean(r[statC]):''};out.push(last)}
+  else if(last&&cnt>0)last.counted+=cnt});
+ out.hasGrid=out.length>0&&gridTotal/out.length>=3;
+ const yy=clean((rows[hi+1]||[])[dc]).match(/\d{4}/g);out.yearLabel=yy?(yy.length>1?yy[0]+'-'+yy[1]:yy[0]):'';return out}
+
+function parseStudents(wb,X,list){const out=[],cross=new Set(),layout={},seenIn={};
+ list.forEach(sn=>{let grade='',meta=null,title='';const xs=X[sn]||new Map(),MI=mergeInfo(wb.Sheets[sn]);
+  grid(wb.Sheets[sn]).forEach((r,ri)=>{const b=clean(r[1]);
+   if(/Class Schedule/i.test(b)){title=b;meta=null;grade='';return}
+   const g=b.match(/Grade\s+(.+?)\s*\/\s*Room/i);
+   if(g){const lab=g[1].trim();let key=lab,n=1;while(layout[key]){n++;key=lab+' #'+n}
+    (seenIn[lab]=seenIn[lab]||[]).push(sn);grade=key;meta=layout[grade]={title,gradeLine:b.replace(/\s+/g,' '),session:'',campus:'',rows:[],notes:[]};return}
+   if(!meta)return;
+   if(!meta.rows.length&&b!=='Time'){let hit=false;
+    if(/Session/i.test(b)){meta.session=b.replace(/\s+/g,' ');hit=true}
+    if(/Campus/i.test(clean(r[6]))){meta.campus=clean(r[6]);hit=true}
+    if(hit)return}
+   if(/^Lunch/i.test(b)){meta.rows.push({t:'lunch',label:b});return}
+   if(b==='Time'){meta.rows.push({t:'head'});return}
+   if(/^\d{1,2}:\d{2}/.test(b)){const cells=[];let brk=false;
+    for(let d=0;d<5;d++){const v=clean(r[2+d]),K=ri+'|'+(2+d),x=!!(xs.get(String.fromCharCode(67+d)+(ri+1))||{}).x;
+     if(x)cross.add(grade+'|'+DAYS[d]+'|'+b);
+     cells.push({v,x,cs:MI.cs[K]>1?MI.cs[K]:0,rs:MI.rs[K]>1?MI.rs[K]:0,skip:MI.cov.has(K),ref:sn+'!'+String.fromCharCode(67+d)+(ri+1)});
+     if(d===0&&/^break/i.test(v))brk=true;
+     if(v&&!/^break/i.test(v)){const L=v.split('\n').map(clean).filter(Boolean);
+      out.push({grade,day:DAYS[d],time:b,subject:L[0],teacher:L.slice(1).join(' '),ref:sn+'!'+String.fromCharCode(67+d)+(ri+1)})}}
+    meta.rows.push({t:'row',time:b,cells,brk});return}
+   if(meta.rows.length){const f=r.slice(1,7).map(clean).find(v=>v);if(f)meta.notes.push(f)}
+  })});const dups={};Object.keys(seenIn).forEach(k=>{if(seenIn[k].length>1)dups[k]=seenIn[k]});return{out,cross,layout,dups}}
+
+const wb_=$('wb');['dragover','dragenter'].forEach(ev=>wb_.addEventListener(ev,e=>{e.preventDefault();wb_.classList.add('drag')}));
+['dragleave','drop'].forEach(ev=>wb_.addEventListener(ev,e=>{e.preventDefault();wb_.classList.remove('drag')}));
+wb_.addEventListener('drop',e=>{const fl=e.dataTransfer.files;if(fl&&fl.length){$('f').files=fl;$('f').dispatchEvent(new Event('change'))}});
+async function loadBuf(buf,name){$('msg').textContent='Reading…';EDITS=[];SAVED=[];CURBUF={buf,name};
+ try{const wb=XLSX.read(buf,{type:'array'});
+  if(!wb.Sheets['TIMESHEET'])throw new Error('No TIMESHEET sheet found');
+  let X={};try{X=await crossedCells(buf)}catch(e){console.warn('crossed cells not read',e)}
+  const cl=classify(wb),blocks=parseTeachers(wb,X,cl.teach),sp=parseStudents(wb,X,cl.stud);
+  const cmName=campusName(Object.values(sp.layout).map(L=>L.campus).find(c=>/campus/i.test(c)),name,clean(((grid(wb.Sheets['TIMESHEET'])[9])||[])[1]));
+  S={ts:parseTimesheet(wb),blocks,stud:sp.out,studX:sp.cross,layout:sp.layout,campus:cmName};
+  S.base=snapshotCells(S);
+  if($('mode').options&&$('mode').options[1])$('mode').options[1].disabled=!S.ts.hasGrid;
+  if(!S.ts.hasGrid)$('mode').value='declared';
+  if($('mode').options&&$('mode').options[0])$('mode').options[0].textContent='Teaching hours/week'+(S.ts.yearLabel?' ('+S.ts.yearLabel+' column)':' (latest year column)');
+  $('scG').innerHTML='<option value="">All grades</option>'+Object.keys(sp.layout).map(g=>`<option>${esc(g)}</option>`).join('');
+  $('msg').textContent=`${name}: ${S.ts.length} timesheet rows, ${blocks.length} teacher schedules, ${S.stud.length} student periods.`;
+  const subs=[...new Set(blocks.map(b=>b.subject))];
+  $('subSel').innerHTML='<option value="">All subjects</option>'+subs.map(s=>`<option>${esc(s)}</option>`).join('');
+  const T0=[...Object.values(sp.layout).map(L=>L.title),...blocks.map(b=>b.title)].join(' '),sm=T0.match(/Semester\s*(\d+)/i),
+   ay=T0.match(/Academic Year\s*(\d{4})\s*-\s*(\d{4})/i)||(blocks[0]&&blocks[0].sy.match(/(\d{4})\s*-\s*(\d{4})/));
+  $('sem').textContent=[S.campus,sm?'Semester '+sm[1]:'',ay?ay[1]+'\u2013'+ay[2]:''].filter(Boolean).join(', ')||'Workbook loaded';
+  const yrs={};Object.entries(sp.layout).forEach(([g,L])=>{const m=L.title.match(/(\d{4})\s*-\s*(\d{4})/);if(m){const k=m[1]+'\u2013'+m[2];(yrs[k]=yrs[k]||[]).push(g)}});
+  const ys=Object.entries(yrs).sort((a,b)=>b[1].length-a[1].length);
+  Object.entries(sp.dups||{}).forEach(([k,v])=>{$('msg').textContent+=' Note: class '+k+' appears '+v.length+' times in the workbook ('+v.join(', ')+'); every copy is kept as its own table.'});
+  if(ys.length>1)$('msg').textContent+=' Check: '+ys.slice(1).map(([k,v])=>`class ${v.join(', ')} says ${k}`).join('; ')+' in its title.';
+  if(S.campus&&CAMPUSES.includes(S.campus)&&$('campSel').value!==S.campus){$('campSel').value=S.campus;if(CUR)loadHist(true)}
+  if(S.campus&&!CAMPUSES.includes(S.campus))$('msg').textContent+=' Campus '+S.campus+' is not in the Campus list yet'+(canAdmin()?'. Add it in the Administrative tab.':'. Ask an administrator to add it.')
+  const allT=[...new Set(Object.values(sp.layout).flatMap(L=>L.rows.filter(r=>r.t==='row'&&!r.brk).map(r=>r.time)))];
+  S.blocked=allT.filter(t=>/^4:00.*PM/i.test(t));
+  $('blkBar').innerHTML='<span>Blocked sessions (never suggested for fixes):</span>'+allT.map(t=>`<label><input type="checkbox" data-t="${esc(t)}"${S.blocked.includes(t)?' checked':''}>${esc(t)}</label>`).join('')+'<span style="flex:1 1 100%"></span><label><input type="checkbox" id="lowChk" checked>Grade 1\u20133 classes: never suggest 11:00 - 11:50 AM</label>';
+  S.noLow=true;
+  renderTS();renderSC();renderTC();renderHR();renderEditBar();
+ }catch(err){$('msg').textContent='Could not read file: '+err.message}}
+document.getElementById('f').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer();LAST={buf,name:f.name};OPENED=null;CURU=null;loadBuf(buf,f.name)});
+
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('#tabs button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-current',x===b?'page':'false')});
+ ['ts','tc','sc','hr','ad'].forEach(id=>$(id).classList.toggle('hide',id!==b.dataset.t));if(b.dataset.t==='ad'&&canAdmin()){loadUsers();loadHistory()}});
+['mode','tsOnly'].forEach(id=>$(id).onchange=()=>S&&renderTS());
+$('subSel').onchange=$('tcQ').oninput=()=>S&&renderTC();$('scF').onchange=$('scG').onchange=()=>S&&renderSC();
+$('hrG').onchange=$('hrOnly').onchange=()=>S&&renderHR();
+$('blkBar').addEventListener('change',()=>{if(!S)return;S.blocked=[...$('blkBar').querySelectorAll('input[data-t]:checked')].map(x=>x.dataset.t);S.noLow=!!($('lowChk')&&$('lowChk').checked);renderSC()});
+const pill=(c,t)=>`<span class="pill ${{grn:'ok',yel:'yel',org:'org',red:'red'}[c]||''}">${esc(t)}</span>`;
+const KIND={Match:'ok',Mismatch:'yel','Slot differs':'org','No schedule':'org','Teacher busy':'red','Teacher-only':'red',Conflicts:'red',OK:'ok',Classes:'','Needs attention':'yel','No homeroom':'red'};
+const stat=(l,v)=>`<div class="stat ${KIND[l]||''}"><b>${v}</b>${l}</div>`;
+
+function renderHR(){
+ const used=S.ts.some(t=>splitHomeroom(t.hr).length>0);
+ const hb=document.querySelector('#tabs [data-t="hr"]');if(hb)hb.style.opacity=used?'':'.55';
+ if(!used){S.kpi=S.kpi||{};S.kpi.hr=null;S.rep=S.rep||{};S.rep.hr=null;$('hrStats').innerHTML='';$('hrG').innerHTML='';
+  $('hrOut').innerHTML='<p class="okn"><b>No homeroom at this campus.</b> The "Home room" column of the TIMESHEET is empty, so there is nothing to check here.</p>';renderOV();return}
+ const rows=homeroomRows(S);
+ S.rep=S.rep||{};S.rep.hr=rows.map(r=>({cls:r.label,teacher:r.teacher,subject:r.sub,phone:r.phone,tsClass:r.raw,periods:r.slots.map(e=>e.day+' '+e.time).join(', '),status:r.st}));
+ const cls=[...new Set(rows.map(r=>r.c))],cur=$('hrG').value;
+ $('hrG').innerHTML='<option value="">All classes</option>'+cls.map(c=>`<option>${esc(c)}</option>`).join('');$('hrG').value=cls.includes(cur)?cur:'';
+ const ok=rows.filter(r=>r.sev==='ok').length,no=rows.filter(r=>!r.name).length;
+ S.kpi=S.kpi||{};S.kpi.hr={ok,total:rows.length};
+ $('hrStats').innerHTML=stat('Classes',cls.length)+stat('OK',ok)+stat('Needs attention',rows.length-ok-no)+stat('No homeroom',no);
+ const g=$('hrG').value,list=rows.filter(r=>(!g||r.c===g)&&(!$('hrOnly').checked||r.sev!=='ok'));
+ const SC={ok:'grn',org:'org',yel:'yel',red:'red'};
+ $('hrOut').innerHTML=list.length?`<table><tr><th>Class</th><th>Homeroom teacher</th><th>Subject</th><th>Phone</th><th>TIMESHEET says</th><th>Homeroom periods in the teacher schedule</th><th>Status</th></tr>`+
+  list.map(r=>`<tr class="${r.sev==='ok'?'':r.sev}"><td><b>${esc(r.label)}</b></td><td>${esc(r.teacher)}</td><td>${esc(r.sub)}</td><td>${esc(r.phone)}</td><td>${esc(r.raw)}</td><td>${r.slots.map(e=>`<span class="chip">${e.day} ${esc(e.time)}</span>`).join('')}</td><td>${pill(SC[r.sev],r.st)}</td></tr>`).join('')+'</table>'
+  :'<p class="mut">No homeroom issues found.</p>';
+ renderOV()}
+
+function renderOV(){const k=S&&S.kpi;if(!k||!k.ts||!k.sc)return;
+ const col=p=>p>=90?'ok':p>=60?'yel':'org',pc=(a,b)=>b?Math.round(a/b*100):0;
+ const a=pc(k.ts.ok,k.ts.total),b=pc(k.sc.m,k.sc.total),c=k.sc.cf;
+ const tile=(go,cls,p,txt,t,sub)=>`<button class="tile ${cls}" data-go="${go}"><span class="ring" style="--p:${p}"><span>${txt}</span></span><span><b>${t}</b><small>${sub}</small></span></button>`;
+ $('ov').innerHTML=tile('ts',col(a),a,a+'%','Timesheets',`${k.ts.ok} of ${k.ts.total} teachers match`)
+  +tile('sc',col(b),b,b+'%','Class schedules',`${k.sc.m} of ${k.sc.total} periods match`)
+  +tile('sc',c?'red':'ok',100,c,'Conflicts',c?`${c} to fix, see Schedules`:'No conflicts found')
+  +(k.hr?(()=>{const h=pc(k.hr.ok,k.hr.total);return tile('hr',col(h),h,h+'%','Homeroom',`${k.hr.ok} of ${k.hr.total} classes OK`)})():'')}
+$('ov').addEventListener('click',e=>{const t=e.target.closest('.tile');if(t){const b=document.querySelector('#tabs [data-t="'+t.dataset.go+'"]');b&&b.click()}});
+
+function renderTS(){
+ const tot={},hm={},isH=e=>/^homeroom/i.test(clean(e.subject));S.blocks.forEach(b=>{tot[b.name]=(tot[b.name]||0)+b.entries.filter(e=>!isH(e)).length;hm[b.name]=(hm[b.name]||0)+b.entries.filter(isH).length});
+ const mode=$('mode').value;let ok=0,bad=0,none=0;
+ const rows=S.ts.map(t=>{const has=t.name in tot,p=t[mode],s=has?tot[t.name]:null;
+  let cls='grn',st='Match';
+  if(!has){cls='org';st='No teacher schedule found';none++}
+  else if(p!==s){cls='yel';st='Mismatch';bad++}else ok++;
+  return{t,p,s,cls,st}});
+ S.kpi=S.kpi||{};S.kpi.ts={ok,total:S.ts.length};
+ S.rep=S.rep||{};S.rep.ts=rows.map(({t,p,s,st})=>({id:t.id,name:t.display,subject:t.subject,declared:t.declared,counted:S.ts.hasGrid?t.counted:null,sched:s,home:s==null?null:(hm[t.name]||0),diff:s==null?null:p-s,status:st}));
+ $('tsStats').innerHTML=stat('Teachers',S.ts.length)+stat('Match',ok)+stat('Mismatch',bad)+stat('No schedule',none);
+ const list=rows.filter(r=>!$('tsOnly').checked||r.cls!=='grn');
+ $('tsOut').innerHTML=`<table><tr><th class="n">Row</th><th>ID</th><th>Name</th><th>Subject</th><th class="n">Teaching hrs/wk</th><th class="n">Periods in grid</th><th class="n">Schedule total</th><th class="n">Homeroom</th><th class="n">Diff</th><th>Status</th></tr>`+
+ list.map(({t,p,s,cls,st})=>`<tr class="${cls==='grn'?'':cls}"><td class="n">${t.row}</td><td>${esc(t.id)}</td><td><b>${esc(t.display)}</b></td><td>${esc(t.subject)}</td><td class="n">${t.declared}</td><td class="n">${S.ts.hasGrid?t.counted:'–'}</td><td class="n">${s==null?'–':s}</td><td class="n mut">${s==null?'–':(hm[t.name]||0)}</td><td class="n">${s==null?'–':(p-s>0?'+':'')+(p-s)}</td><td>${pill(cls,st)}</td></tr>`).join('')+'</table>';renderOV()}
+
+function xlTeacher(b){
+ const hdr='<tr><th>Time</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr>';
+ const body=b.rows.map(r=>{
+  if(r.t==='head')return hdr;
+  if(r.t==='lunch')return`<tr><td class="lt" colspan="6">${esc(r.label)}</td></tr>`;
+  if(r.t==='foot')return'<tr>'+r.items.map(it=>`<td class="ft" colspan="${it.span}" style="text-align:${it.al};${it.bg?`background:${it.bg};color:#000;`:''}${it.bold?'font-weight:700':''}">${it.v==='__TOT__'?b.entries.length+' Hours/Week':esc(it.v)}</td>`).join('')+'</tr>';
+  return`<tr><td class="tm" style="${r.tbg?`background:${r.tbg};color:#000`:''}">${esc(r.time)}</td>`+r.cells.map((c,d)=>{if(c.skip)return'';const cm=S.tconf&&S.tconf.get(b.name+'|'+DAYS[d]+'|'+r.time),dr=canArrange()&&c.v&&!r.brk,bi=S.blocks.indexOf(b);
+   return`<td class="${[c.x?'x':'',cm?'red':'',dr?'drag':''].join(' ').trim()}"${c.cs?` colspan="${c.cs}"`:''}${c.rs?` rowspan="${c.rs}"`:''} data-b="${bi}" data-d="${d}" data-t="${esc(r.time)}"${dr&&!TOUCHY?' draggable="true"':''} title="${cm?esc(cm):''}" style="${c.bg?`background-color:${c.bg};color:#000`:''}">${esc(c.v).replace(/\n-{3}\n/g,'<hr class="stack">').replace(/\n/g,'<br>')}${cm?'<small>Conflict</small>':''}</td>`}).join('')+'</tr>'}).join('');
+ const cm=S.tconf?[...S.tconf.entries()].filter(([k])=>k.startsWith(b.name+'|')):[],ban=cm.length?`<tr><td class="cfl" colspan="6">Conflict (${cm.length} slot${cm.length>1?'s':''}): ${esc([...new Set(cm.map(x=>x[1]))].join(' '))}</td></tr>`:'';
+ return`<div class="wrap" style="margin-bottom:18px"><table class="xl xt"><tr><td class="ttl" colspan="6">${esc(b.title)}</td></tr><tr><td class="lt" colspan="6">${esc(b.sy)}</td></tr><tr><td class="sess" colspan="5">${esc(b.instr)}</td><td class="sess" style="${b.campusBg?`background:${b.campusBg};color:#000`:''}">${esc(b.campus)}</td></tr>${ban}${body}</table></div>`}
+
+function renderTC(){const sub=$('subSel').value,q=$('tcQ').value.toLowerCase();let h='';
+ const subs=[...new Set(S.blocks.map(b=>b.subject))].filter(s=>!sub||s===sub);
+ subs.forEach(s=>{const bl=S.blocks.filter(b=>b.subject===s&&b.display.toLowerCase().includes(q));if(!bl.length)return;
+  h+=`<details open style="margin-top:14px"><summary style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px">${esc(s)} <span class="mut" style="font-weight:400">(${bl.length} teacher${bl.length>1?'s':''})</span></summary>${bl.map(xlTeacher).join('')}</details>`});
+ $('tcOut').innerHTML=h||'<p class="mut">No teachers found.</p>'}
+
+function renderSC(){
+ const LAB={};Object.keys(S.layout).forEach(g=>LAB[code(g)]=g);const labelOf=g=>LAB[code(g)]||clean(g).replace(/^Grade\s*/i,'');
+ const own=(S.campus||'').toUpperCase();
+ const T=[];S.blocks.forEach(b=>b.entries.forEach(e=>{const g=code(e.grade);
+  if(LAB[g]&&!/^homeroom/i.test(clean(e.subject))&&(!e.campus||!own||clean(e.campus).toUpperCase().indexOf(own)>=0))T.push({n:b.name,s:nSub(e.subject),g,day:e.day,time:e.time,disp:b.display,sub:e.subject,gr:e.grade,ref:e.ref})}));
+ const k3=e=>e.n+'|'+e.s+'|'+e.g,k5=e=>k3(e)+'|'+e.day+'|'+e.time;
+ const byK=a=>{const m={};a.forEach(e=>(m[k3(e)]=m[k3(e)]||[]).push(e));return m},T3m=byK(T),names=new Set(S.blocks.map(b=>b.name));
+ const St=S.stud.map(x=>({n:nName(x.teacher),s:nSub(x.subject),g:code(x.grade),day:x.day,time:x.time,raw:x}));
+ const S3m=byK(St),hasMatch=(list,e)=>!!list&&list.some(x=>x.day===e.day&&slotsOverlap(x.time,e.time));
+ const C={};S.blocks.forEach(b=>{(C[b.name]=C[b.name]||new Set());b.crossed.forEach(k=>C[b.name].add(k))});
+ const busy=e=>!!C[e.n]&&[...C[e.n]].some(k=>{const i=k.indexOf('|');return k.slice(0,i)===e.day&&slotsOverlap(k.slice(i+1),e.time)});
+ let m=0,sd=0,mm=0,to=0,bz=0;const rows=[],CS={};
+ St.forEach(e=>{const r=e.raw;let cls='grn',st='Match';
+  if(busy(e)){cls='red';st='Teacher is crossed (busy) at this time';bz++}
+  else if(hasMatch(T3m[k3(e)],e))m++;
+  else if(T3m[k3(e)]){cls='org';st='Slot differs (teacher has this class at another time)';sd++}
+  else{cls='yel';st=names.has(e.n)?'Subject/Grade not in teacher schedule':'Teacher not found';mm++}
+  CS[r.grade+'|'+r.day+'|'+r.time]={cls,st,lab:cls==='red'?'Teacher busy':''};
+  rows.push({cls,g:r.grade,day:r.day,time:r.time,sub:r.subject,t:r.teacher,st})});
+
+ T.filter(e=>!hasMatch(S3m[k3(e)],e)).forEach(e=>{to++;rows.push({cls:'red',g:e.gr.replace(/^Grade\s*/i,''),day:e.day,time:e.time,sub:e.sub,t:e.disp,st:'In teacher schedule, missing from student schedule'})});
+ const grp=(a,f)=>{const m={};a.forEach(e=>(m[f(e)]=m[f(e)]||[]).push(e));return m};
+ const isLow=g=>/^[1-3](?!\d)/.test(nGrade(g));
+ const freeOf=(n,low)=>{const bl=S.blocks.filter(b=>b.name===n),used=new Set();
+  const times=[...new Set(bl.flatMap(b=>b.rows.filter(r=>r.t==='row'&&!r.brk).map(r=>r.time)))].filter(t=>!(S.blocked||[]).includes(t)&&!(S.noLow&&low&&/^11:00.*AM/i.test(t)));
+  bl.forEach(b=>{b.entries.forEach(e=>used.add(e.day+'|'+e.time));b.crossed.forEach(k=>used.add(k))});
+  const f=[];times.forEach(t=>DAYS.forEach(d=>{if(!used.has(d+'|'+t))f.push(d+' '+t)}));
+  return f.length?f.slice(0,5).join(', ')+(f.length>5?' and '+(f.length-5)+' more':''):'none free'};
+ const fixFor=(n,grades,who)=>{const ls=[...new Set(grades.map(isLow))];
+  if(ls.length===1)return`Move one class to a free slot for ${who}: ${freeOf(n,ls[0])}.`;
+  return grades.map(g=>`Moving Grade ${clean(g).replace(/^Grade\s*/i,'')}: ${freeOf(n,isLow(g))}.`).join(' ')};
+ const classSlotKeys=v=>{const lab=labelOf(v[0].gr),L=S.layout[lab],keys=new Set();
+  v.forEach(x=>{const hit=L?L.rows.filter(r=>r.t==='row'&&slotsOverlap(r.time,x.time)).map(r=>lab+'|'+x.day+'|'+r.time):[];(hit.length?hit:[lab+'|'+x.day+'|'+x.time]).forEach(k=>keys.add(k))});return[...keys]};
+ const cf=[];
+ overlapGroups(St,e=>e.n+'|'+e.day).forEach(v=>{const gs=[...new Set(v.map(x=>code(x.raw.grade)))];
+  if(gs.length>1){const t=v[0].raw.teacher;cf.push({type:'Teacher in two classes',day:v[0].raw.day,time:v[0].raw.time,who:t,
+   what:`${t} is scheduled in ${v.map(x=>'Grade '+x.raw.grade+' ('+x.raw.subject+')').join(' and ')} at the same time.`,
+   where:v.map(x=>x.raw.ref).join(', '),fix:fixFor(v[0].n,v.map(x=>x.raw.grade),t),
+   cells:v.map(x=>x.raw.grade+'|'+x.day+'|'+x.time),tk:[v[0].n+'|'+v[0].day+'|'+v[0].time]})}});
+ const TA=[];S.blocks.forEach(b=>b.entries.forEach(e=>TA.push({n:b.name,disp:b.display,...e})));
+ overlapGroups(TA,e=>e.n+'|'+e.day).forEach(v=>{
+  if(v.length>1)cf.push({type:'Teacher double-booked in teacher schedule',day:v[0].day,time:v[0].time,who:v[0].disp,
+   what:`${v[0].disp} has ${v.map(x=>x.subject+' '+x.grade+(x.campus?' ('+x.campus.replace(' Campus','')+')':'')).join(' and ')} in the same slot.`,
+   where:v.map(x=>x.ref).join(', '),fix:fixFor(v[0].n,v.map(x=>x.grade),v[0].disp),cells:[],tk:[...new Set(v.map(x=>v[0].n+'|'+x.day+'|'+x.time))]})});
+ overlapGroups(T,e=>e.g+'|'+e.day).forEach(v=>{const ns=[...new Set(v.map(x=>x.n))];
+  if(ns.length>1){const gl='Grade '+v[0].gr.replace(/^Grade\s*/i,'');cf.push({type:'Class with two teachers',day:v[0].day,time:v[0].time,who:gl,
+   what:`${gl} has ${v.map(x=>x.disp+' ('+x.sub+')').join(' and ')} at the same time.`,
+   where:v.map(x=>x.ref).join(', '),fix:`Keep one teacher for this slot. Free slots for ${v[1].disp}: ${freeOf(v[1].n,isLow(v[0].gr))}.`,
+   cells:classSlotKeys(v),tk:v.map(x=>x.n+'|'+x.day+'|'+x.time)})}});
+ Object.entries(S.layout).forEach(([g,L])=>L.rows.forEach(r=>{if(r.t!=='row')return;r.cells.forEach((c,d)=>{if(c.x&&clean(c.v)&&!/^break/i.test(clean(c.v))){const P=classLines(c.v);
+  cf.push({type:'Class in a crossed-out slot',day:DAYS[d],time:r.time,who:'Grade '+g,what:P[0]+' ('+P.slice(1).join(' ')+') is in a slot that is crossed out (not used) for Grade '+g+'.',where:c.ref||'',fix:'Move the class to a slot that is not crossed out.',cells:[g+'|'+DAYS[d]+'|'+r.time],tk:[]})}})}));
+ S.blocks.forEach(b=>b.rows.forEach(r=>{if(r.t!=='row')return;r.cells.forEach((c,d)=>{if(c.x&&clean(c.v)&&!/^break/i.test(clean(c.v))){
+  cf.push({type:'Class on a slot the teacher has crossed out',day:DAYS[d],time:r.time,who:b.display,what:b.display+' has a class on '+DAYS[d]+' at '+r.time+', a slot that is crossed out (busy).',where:c.ref||'',fix:'Move the class to a slot that is not crossed out.',cells:[],tk:[b.name+'|'+DAYS[d]+'|'+r.time]})}})}));
+ cf.forEach(c=>c.cells.forEach(k=>{CS[k]={cls:'red',st:'Conflict: '+c.what,lab:'Conflict'}}));
+ rows.forEach(r=>{const c=CS[r.g+'|'+r.day+'|'+r.time];if(c&&c.lab==='Conflict'){r.cls='red';r.st=c.st}});
+ S.rep=S.rep||{};S.rep.sc=rows.map(r=>({grade:r.g,day:r.day,time:r.time,subject:r.sub,teacher:r.t,result:r.st}));
+ S.rep.cf=cf.map(c=>({type:c.type,day:c.day,time:c.time,who:c.who,what:c.what,where:c.where,fix:c.fix}));
+ S.tconf=new Map();cf.forEach(c=>c.tk.forEach(k=>S.tconf.set(k,c.what)));
+ $('scConf').innerHTML=cf.length?`<h3>Conflicts (${cf.length})</h3><div class="wrap" style="border:1px solid var(--line);border-radius:8px"><table><tr><th>Type</th><th>When</th><th>Teacher / Class</th><th>What is wrong</th><th>Where (sheet!cell)</th><th>Suggested fix</th></tr>`+cf.map(c=>`<tr class="red"><td><b>${esc(c.type)}</b></td><td>${c.day}<br>${esc(c.time)}</td><td>${esc(c.who)}</td><td>${esc(c.what)}</td><td>${esc(c.where)}</td><td>${esc(c.fix)}</td></tr>`).join('')+'</table></div><p class="mut" style="font-size:12.5px;margin:8px 0 0">'+((S.blocked||[]).length?'Blocked sessions are never suggested: '+esc(S.blocked.join(', '))+'.':'No sessions are blocked.')+(S.noLow?' Grade 1\u20133 classes are never moved to 11:00 - 11:50 AM; other grades can use it.':'')+'</p>'
+  :'<p class="okn"><b>No conflicts found.</b> No teacher is in two classes at the same time, and no class has two teachers at the same time.</p>';
+ m=rows.filter(r=>r.st==='Match').length;
+ S.kpi=S.kpi||{};S.kpi.sc={m,total:St.length,cf:cf.length};
+ $('scStats').innerHTML=stat('Student periods',St.length)+stat('Match',m)+stat('Slot differs',sd)+stat('Mismatch',mm)+stat('Teacher busy',bz)+stat('Teacher-only',to)+stat('Conflicts',cf.length);
+ const list=rows.filter(r=>$('scF').value==='all'||r.cls!=='grn');
+ const sel=$('scG').value,hdr='<tr><th>Time</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr>';
+ $('scGrids').innerHTML=Object.entries(S.layout).filter(([g])=>!sel||g===sel).map(([g,L])=>{
+  const body=L.rows.map(r=>{
+   if(r.t==='head')return hdr;
+   if(r.t==='lunch')return`<tr><td class="lt" colspan="6">${esc(r.label)}</td></tr>`;
+   return`<tr><td class="tm">${esc(r.time)}</td>`+r.cells.map((c,d)=>{
+    if(c.skip)return'';
+    const k=g+'|'+DAYS[d]+'|'+r.time,st=CS[k],x=c.x,txt=esc(c.v).replace(/\n/g,'<br>');
+    const dr=canArrange()&&c.v&&!r.brk,cl=[x?'x':'',st&&st.cls!=='grn'?st.cls:'',dr?'drag':''].filter(Boolean).join(' ');
+    return`<td class="${cl}"${c.cs?` colspan="${c.cs}"`:''}${c.rs?` rowspan="${c.rs}"`:''} data-g="${esc(g)}" data-d="${d}" data-t="${esc(r.time)}"${dr&&!TOUCHY?' draggable="true"':''} title="${st&&st.cls!=='grn'?esc(st.st):''}">${txt}${st&&st.lab?`<small>${st.lab}</small>`:''}</td>`}).join('')+'</tr>'}).join('');
+  return`<div class="wrap"><table class="xl"><tr><td class="ttl" colspan="6">${esc(L.title)}</td></tr><tr><td class="sess" colspan="6">${esc(L.gradeLine)}</td></tr><tr><td class="sess" colspan="5">${esc(L.session)}</td><td class="sess">${esc(L.campus)}</td></tr>`+body+L.notes.map(n=>`<tr><td class="ft" colspan="6">${esc(n)}</td></tr>`).join('')+'</table></div>'}).join('');
+ $('scOut').innerHTML=list.length?`<table><tr><th>Grade</th><th>Day</th><th>Time</th><th>Subject</th><th>Teacher</th><th>Result</th></tr>`+
+  list.map(r=>`<tr class="${r.cls==='grn'?'':r.cls}"><td>${esc(r.g)}</td><td>${r.day}</td><td>${esc(r.time)}</td><td>${esc(r.sub)}</td><td>${esc(r.t)}</td><td>${pill(r.cls,r.st)}</td></tr>`).join('')+'</table>':'<p class="mut">No issues found.</p>';renderOV()}
+
+// ---- username sign-in and Excel report (tested by tests/*.test.js) ----
+/*LOGIN-START*/
+// Staff sign in with a short username. The page turns it into a hidden email for Supabase.
+// The domain must be one nobody can register (example.com is reserved), so reset mails can never reach a stranger.
+const LOGIN_DOMAIN='example.com';
+function loginEmail(v){
+ if(v==null)return null;const t=String(v).trim().toLowerCase();if(!t)return null;
+ if(t.indexOf('@')>=0)return /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(t)?t:null;
+ return t.length<=64&&t.indexOf('..')<0&&/^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$/.test(t)?t+'@'+LOGIN_DOMAIN:null}
+function shortName(n){return n?String(n).replace(new RegExp('@'+LOGIN_DOMAIN.replace(/\./g,'\\.')+'$','i'),''):''}
+/*LOGIN-END*/
+/*REPORT-START*/
+// Turns the saved check results (S.rep) into the sheets of the Excel report. Pure function, no page access.
+const FORMULA=/^[=+\-@\t\r]/;
+const safe=v=>v==null?'':(typeof v==='string'&&FORMULA.test(v)?"'"+v:v);
+function reportName(m){const c=x=>String(x==null?'':x).replace(/[^\w.\-]+/g,'_').replace(/^_+|_+$/g,'');return [c(m.campus),c(m.semester),'report'].filter(Boolean).join('_')+'.xlsx'}
+function buildReport(S,meta){
+ if(!S||!S.rep)throw new Error('No workbook loaded');
+ const k=S.kpi||{},R=S.rep,ts=k.ts||{},sc=k.sc||{};
+ const sum=[['BTB schedule check report'],['Campus',meta.campus],['Semester',meta.semester],['Date',meta.date],['Hours compared',meta.mode],[],
+  ['Check','OK','Total'],['Timesheets',ts.ok,ts.total],['Class schedules',sc.m,sc.total],['Conflicts',sc.cf],
+  k.hr?['Homeroom',k.hr.ok,k.hr.total]:['Homeroom','No homeroom at this campus']];
+ const tsr=[['ID','Name','Subject','Teaching hrs/wk','Periods in grid','Schedule total','Homeroom','Diff','Status']].concat((R.ts||[]).map(r=>[r.id,r.name,r.subject,r.declared,r.counted,r.sched,r.home,r.diff,r.status]));
+ const scr=[['Grade','Day','Time','Subject','Teacher','Result']].concat((R.sc||[]).map(r=>[r.grade,r.day,r.time,r.subject,r.teacher,r.result]));
+ scr.push([],['Conflicts'],['Type','Day','Time','Who','What','Where','Fix']);(R.cf||[]).forEach(c=>scr.push([c.type,c.day,c.time,c.who,c.what,c.where,c.fix]));
+ const hr=R.hr?[['Class','Teacher','Subject','Phone','Timesheet class','Homeroom periods','Status']].concat(R.hr.map(r=>[r.cls,r.teacher,r.subject,r.phone,r.tsClass,r.periods,r.status])):[['No homeroom at this campus']];
+ return [['Summary',sum],['Timesheets',tsr],['Schedules',scr],['Homeroom',hr]].map(([name,rows])=>{
+  rows=rows.map(r=>r.map(safe));const cols=Math.max(...rows.map(r=>r.length));
+  const widths=Array.from({length:cols},(_,c)=>Math.min(60,Math.max(8,...rows.map(r=>String(r[c]==null?'':r[c]).length+2))));
+  return{name,rows,widths}})}
+/*REPORT-END*/
+
+/*EDIT-START*/
+// Moving classes by drag and drop. A class can be dropped on ANY class period. Clashes are never refused: they are shown in red.
+// Class schedule: dropping on a slot swaps the two classes. Teacher schedule: the class moves to that teacher's cell; if the cell is
+// already used the two classes are stacked in the cell (shown separated by a line) and highlighted as a conflict.
+// Pure functions: they change the parsed schedule S and nothing else.
+const SEP='\n---\n';
+function cellAt(rows,day,time){const d=DAYS.indexOf(day),r=rows.find(x=>x.t==='row'&&x.time===time);return r&&d>=0?{row:r,cell:r.cells[d]}:null}
+const classLines=v=>clean(v).split('\n').map(clean).filter(Boolean);
+const blocksOf=v=>clean(v)?String(v).split(/\n-{3}\n/).map(clean).filter(Boolean):[];
+const isSlot=a=>!!a&&!a.row.brk&&!a.cell.skip;
+const isClass=a=>isSlot(a)&&!!clean(a.cell.v)&&!/^break/i.test(clean(a.cell.v));
+const sameShape=(a,b)=>(a.cs||0)===(b.cs||0)&&(a.rs||0)===(b.rs||0);
+const lowGrade=g=>/^[1-3](?!\d)/.test(nGrade(g));
+const gradeLabel=(S,g)=>Object.keys(S.layout).find(k=>code(k)===code(g));
+const mineCampus=(S,c)=>!c||!S.campus||clean(c).toUpperCase().indexOf(S.campus.toUpperCase())>=0;
+function takeBlock(cell,subject,grade,k){const B=blocksOf(cell.v);
+ const i=subject==null?(k||0):B.findIndex(x=>{const L=classLines(x);return nSub(L[0])===nSub(subject)&&code(L[1]||'')===code(grade)});
+ if(i<0||i>=B.length)return null;const t=B.splice(i,1)[0];cell.v=B.join(SEP);return t}
+const putBlock=(cell,text)=>{cell.v=[...blocksOf(cell.v),text].join(SEP)};
+const swapText=(a,b)=>{const v=a.v,g=a.bg,f=a.fid;a.v=b.v;a.bg=b.bg;a.fid=b.fid;b.v=v;b.bg=g;b.fid=f};
+function snapshotCells(S){const out=[],add=c=>out.push({c,v:c.v,bg:c.bg,fid:c.fid});
+ Object.values(S.layout).forEach(L=>L.rows.forEach(r=>{if(r.t==='row')r.cells.forEach(add)}));
+ S.blocks.forEach(b=>b.rows.forEach(r=>{if(r.t==='row')r.cells.forEach(add)}));return out}
+function rebuildAll(S){
+ S.blocks.forEach(b=>{b.entries=[];b.rows.forEach(r=>{if(r.t!=='row')return;r.cells.forEach((c,d)=>{if(c.skip)return;
+  blocksOf(c.v).forEach(v=>{if(/^break/i.test(v))return;const L=classLines(v);b.entries.push({day:DAYS[d],time:r.time,subject:L[0],grade:L[1]||'',campus:L[2]||'',ref:c.ref})})})})});
+ S.stud=[];Object.entries(S.layout).forEach(([g,L])=>L.rows.forEach(r=>{if(r.t!=='row')return;r.cells.forEach((c,d)=>{const v=clean(c.v);if(!v||/^break/i.test(v)||c.skip)return;
+  const P=classLines(v);S.stud.push({grade:g,day:DAYS[d],time:r.time,subject:P[0],teacher:P.slice(1).join(' '),ref:c.ref})})}))}
+// where does this class live in the teacher sheets?  returns {b, cell} or null
+function findEntry(S,name,subject,grade,slot){
+ for(const b of S.blocks){if(b.name!==name)continue;const at=cellAt(b.rows,slot.day,slot.time);if(!at)continue;
+  if(blocksOf(at.cell.v).some(x=>{const L=classLines(x);return nSub(L[0])===nSub(subject)&&code(L[1]||'')===code(grade)}))return{b,cell:at.cell,subject,grade}}
+ return null}
+// moves one class from a cell to another. If the first cell is left empty and the second was empty, the two cells swap colours
+// (the class keeps its campus colour, the free slot keeps the free-slot colour).
+function relocate(src,dst,subject,grade,k){
+ const t=takeBlock(src,subject,grade,k);if(t==null)return null;
+ const wasEmpty=!clean(dst.v);putBlock(dst,t);
+ if(!clean(src.v)&&wasEmpty){const g=src.bg,f=src.fid;src.bg=dst.bg;src.fid=dst.fid;dst.bg=g;dst.fid=f}
+ return t}
+function moveEntry(S,e,slot){const dst=cellAt(e.b.rows,slot.day,slot.time);if(!isSlot(dst))return;relocate(e.cell,dst.cell,e.subject,e.grade)}
+function ruleWarnings(S,grade,time){const w=[];
+ if((S.blocked||[]).includes(time))w.push(time+' is a blocked session.');
+ if(S.noLow&&lowGrade(grade)&&/^11:00.*AM/i.test(time))w.push('Grade 1-3 classes should not be at '+time+'.');return w}
+// mv = {kind:'student', g:<class label>, from:{day,time}, to:{day,time}}
+//    | {kind:'teacher', bi:<teacher sheet index>, from:{day,time}, toBi:<teacher sheet index>, to:{day,time}, k:<which class in a stacked cell>}
+// checkMove only refuses what is impossible; "warnings" are notes shown after the move.
+function checkMove(S,mv){
+ const out={ok:false,reasons:[],warnings:[]},R=m=>{out.reasons.push(m)},f=mv.from,t=mv.to;
+ if(!S||!f||!t){R('Nothing is loaded.');return out}
+ if(mv.kind==='student'){
+  const L=S.layout[mv.g];if(!L){R('Class not found.');return out}
+  if(mv.toG!==undefined&&mv.toG!==mv.g){R('Drop the class on a slot of the same class table.');return out}
+  if(f.day===t.day&&f.time===t.time){R('That is the same slot.');return out}
+  const A=cellAt(L.rows,f.day,f.time),B=cellAt(L.rows,t.day,t.time);
+  if(!isClass(A)){R('There is no class to move here.');return out}
+  if(!isSlot(B)){R('That is not a class period.');return out}
+  if(!sameShape(A.cell,B.cell))R('That slot has a different length.');
+  if(isClass(B)&&clean(A.cell.v)===clean(B.cell.v))R('Both slots have the same class, so nothing would change.');
+  ruleWarnings(S,mv.g,t.time).forEach(w=>out.warnings.push(w));if(isClass(B))ruleWarnings(S,mv.g,f.time).forEach(w=>out.warnings.push(w));
+ }else{
+  const bj=mv.toBi==null?mv.bi:mv.toBi,B=S.blocks[mv.bi],B2=S.blocks[bj];
+  if(!B||!B2){R('Teacher not found.');return out}
+  if(mv.bi===bj&&f.day===t.day&&f.time===t.time){R('That is the same slot.');return out}
+  const a=cellAt(B.rows,f.day,f.time),b=cellAt(B2.rows,t.day,t.time);
+  if(!isClass(a)){R('There is no class to move here.');return out}
+  if(!isSlot(b)){R('That is not a class period.');return out}
+  if(!sameShape(a.cell,b.cell))R('That slot has a different length.');
+  const P=classLines(blocksOf(a.cell.v)[mv.k||0]||'');
+  ruleWarnings(S,P[1]||'',t.time).forEach(w=>out.warnings.push(w));
+  if(bj!==mv.bi&&B.subject!==B2.subject)out.warnings.push('The class went to a teacher from another subject sheet ('+B2.subject+').');
+ }
+ out.warnings=[...new Set(out.warnings)];out.ok=!out.reasons.length;return out}
+function applyMove(S,mv){
+ const f=mv.from,t=mv.to;
+ if(mv.kind==='student'){
+  const L=S.layout[mv.g],A=cellAt(L.rows,f.day,f.time),B=cellAt(L.rows,t.day,t.time),P=classLines(A.cell.v),Y=isClass(B)?classLines(B.cell.v):null;
+  const t1=nName(P.slice(1).join(' ')),t2=Y?nName(Y.slice(1).join(' ')):'';
+  const e1=t1?findEntry(S,t1,P[0],mv.g,f):null,e2=Y&&t2?findEntry(S,t2,Y[0],mv.g,t):null;
+  swapText(A.cell,B.cell);
+  if(e1)moveEntry(S,e1,t);
+  if(e2)moveEntry(S,e2,f);
+ }else{
+  const bj=mv.toBi==null?mv.bi:mv.toBi,B=S.blocks[mv.bi],B2=S.blocks[bj],a=cellAt(B.rows,f.day,f.time).cell,b=cellAt(B2.rows,t.day,t.time).cell;
+  const text=blocksOf(a.v)[mv.k||0],P=classLines(text||''),label=gradeLabel(S,P[1]||''),sameSlot=f.day===t.day&&f.time===t.time;
+  let X=null;
+  if(label&&mineCampus(S,P[2])){const x=cellAt(S.layout[label].rows,f.day,f.time);
+   if(isClass(x)&&nName(classLines(x.cell.v).slice(1).join(' '))===B.name&&nSub(classLines(x.cell.v)[0])===nSub(P[0]))X=x.cell}
+  relocate(a,b,null,null,mv.k||0);
+  if(X){let at=X;
+   if(!sameSlot){const y=cellAt(S.layout[label].rows,t.day,t.time);
+    if(isSlot(y)){const Yp=isClass(y)?classLines(y.cell.v):null,e2=Yp?findEntry(S,nName(Yp.slice(1).join(' ')),Yp[0],label,t):null;
+     swapText(X,y.cell);at=y.cell;if(e2)moveEntry(S,e2,f)}}
+   if(bj!==mv.bi)at.v=classLines(at.v)[0]+'\n'+B2.full}
+ }
+ rebuildAll(S)}
+function restoreCells(S){(S.base||[]).forEach(o=>{o.c.v=o.v;o.c.bg=o.bg;o.c.fid=o.fid});rebuildAll(S)}
+function replayEdits(S,edits){restoreCells(S);edits.forEach(mv=>applyMove(S,mv))}
+/*EDIT-END*/
+
+// ---- login, semesters, saved workbooks (Supabase) ----
+const SB_URL='https://uupzlprmbfzpzizagiix.supabase.co',SB_KEY='sb_publishable_K-7ot8X6cMaCvCwD2Ow-Kw_HDB1tLwJ';
+const sb=(typeof supabase!=='undefined')?supabase.createClient(SB_URL,SB_KEY):null;
+let CAMPUSES=['BTB1','BTB2','BTB3'],CAMP_ROWS=[],CAMP_DB=false;
+let ME=null,SEMS=[],CUR=null,LAST=null,OPENED=null,CURU=null,CURBUF=null,EDITS=[],SAVED=[],DRAG=null,OVER=null,LASTNOTE='';
+const canEdit=()=>!!ME&&(ME.role==='admin'||ME.role==='registrar');
+const canArrange=()=>!!ME&&ME.role==='admin';
+const TOUCHY=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
+async function boot(){
+ if(!sb){$('authMsg').textContent='Could not load the sign-in library. Check your internet connection and reload.';return}
+ const {data}=await sb.auth.getSession();await onSession(data.session);
+ sb.auth.onAuthStateChange((_e,sess)=>{onSession(sess)})}
+async function onSession(sess){
+ if(!sess){ME=null;OPENED=null;$('auth').classList.remove('hide');$('who').innerHTML='';$('semBar').classList.add('hide');$('adTab').classList.add('hide');return}
+ if(ME&&ME.id===sess.user.id)return;
+ const {data}=await sb.from('profiles').select('full_name,role').eq('id',sess.user.id).single();
+ ME={id:sess.user.id,email:sess.user.email,name:shortName((data&&data.full_name)||sess.user.email),role:(data&&data.role)||'viewer'};
+ $('auth').classList.add('hide');$('semBar').classList.remove('hide');$('adTab').classList.toggle('hide',ME.role!=='admin');
+ $('who').innerHTML=`<b>${esc(ME.name)}</b><small>${esc(ME.role)}</small><button id="pwBtn" class="btn ghost" type="button">Change password</button> <button id="out" class="btn ghost">Sign out</button>`;
+ $('pwBtn').onclick=()=>openPw();
+ $('out').onclick=()=>sb.auth.signOut();
+ await loadSems()}
+$('aIn').onclick=async()=>{if(!sb)return;const em=loginEmail($('aMail').value);if(!em){$('authMsg').textContent='Enter your username (letters, numbers, dot, dash or underscore).';return}
+ $('authMsg').textContent='Signing in…';const {error}=await sb.auth.signInWithPassword({email:em,password:$('aPass').value});if(error)$('authMsg').textContent=error.message;else $('authMsg').textContent='Signed in. Loading…'};
+$('aPass').addEventListener('keydown',e=>{if(e.key==='Enter')$('aIn').click()});
+async function loadSems(){
+ await loadCampuses();
+ const {data}=await sb.from('semesters').select('*').order('academic_year',{ascending:false}).order('number',{ascending:false});
+ SEMS=data||[];const keep=$('semSel').value;
+ $('semSel').innerHTML=SEMS.length?SEMS.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join(''):'<option value="">No semesters yet</option>';
+ if(SEMS.some(x=>x.id===keep))$('semSel').value=keep;
+ CUR=$('semSel').value||null;
+ $('semNew').classList.toggle('hide',!canEdit());$('saveUp').classList.toggle('hide',!canEdit());
+ await loadHist()}
+$('campSel').onchange=()=>{OPENED=null;loadHist()};
+$('semSel').onchange=()=>{CUR=$('semSel').value||null;OPENED=null;loadHist()};
+$('semNew').onclick=async()=>{const y=(prompt('Academic year, for example 2025-2026')||'').trim();if(!y)return;
+ const n=+prompt('Semester number (1, 2 or 3)');if(![1,2,3].includes(n))return alert('Please use 1, 2 or 3.');
+ const {error}=await sb.from('semesters').insert({academic_year:y,number:n,name:`Semester ${n}, ${y}`,created_by:ME.id});
+ if(error)alert(error.message);else{audit('semester.create','Semester '+n+', '+y);loadSems()}};
+/*DELETE-START*/
+// Deleting saved workbooks. Admins and registrars see these buttons; viewers never do (the database enforces it too).
+const canDel=()=>!!ME&&(ME.role==='admin'||ME.role==='registrar');
+async function deleteUploads(items){
+ if(!items||!items.length)return true;
+ const r=await sb.storage.from('workbooks').remove(items.map(u=>u.storage_path));
+ if(r.error){alert('Could not delete the files: '+r.error.message);return false}
+ const d=await sb.from('uploads').delete().in('id',items.map(u=>u.id));
+ if(d.error){alert('The files were removed but the list could not be updated: '+d.error.message);return false}
+ if(typeof audit==='function')audit('workbook.delete',items.map(u=>u.file_name).join(', '),{count:items.length});
+ await loadHist(true);return true}
+async function delOne(u){
+ if(!u||!canDel())return;
+ if(!confirm('Delete "'+u.file_name+'" saved on '+new Date(u.uploaded_at).toLocaleString()+'?'+(u.is_active?' This is the ACTIVE workbook, so this campus will have no active workbook.':'')+' Any arrangement changes saved for it are deleted too. This cannot be undone.'))return;
+ if(OPENED===u.id)OPENED=null;
+ await deleteUploads([u])}
+async function delOlder(list){
+ if(!canDel())return;
+ const old=(list||[]).filter(x=>!x.is_active);if(!old.length)return;
+ if(!confirm('Delete '+old.length+' older saved version'+(old.length>1?'s':'')+' for this campus and semester? The active workbook stays. Arrangement changes saved for the older versions are deleted too. This cannot be undone.'))return;
+ await deleteUploads(old)}
+/*DELETE-END*/
+/*HIST-START*/
+async function loadHist(skipOpen){
+ if(!CUR){$('hist').innerHTML='';return}
+ const {data,error}=await sb.from('uploads').select('id,file_name,storage_path,uploaded_at,is_active').eq('semester_id',CUR).eq('campus',$('campSel').value).order('uploaded_at',{ascending:false});
+ if(error){$('hist').innerHTML='<p class="mut">Could not list saved workbooks: '+esc(error.message)+(/campus/i.test(error.message)?' Run the add_campus.sql file in Supabase first.':'')+'</p>';return}
+ const L=data||[];
+ // Viewers only read: no saved-workbook list, but the active workbook still opens by itself.
+ if(!canEdit()){
+  $('hist').innerHTML=L.some(x=>x.is_active)?'':'<p class="mut">No workbook has been saved for this campus and semester yet.</p>';
+  const a=L.find(x=>x.is_active);if(a&&OPENED!==a.id&&!skipOpen)openUpload(a);return}
+ $('hist').innerHTML=L.length?`<div class="wrap" style="border:1px solid var(--line);border-radius:8px"><table><tr><th>Saved workbook</th><th>Saved on</th><th>Status</th><th></th></tr>`+
+  L.map(u=>`<tr><td>${esc(u.file_name)}</td><td>${esc(new Date(u.uploaded_at).toLocaleString())}</td><td>${u.is_active?pill('grn','Active'):'<span class="mut">Older</span>'}</td><td class="n"><button class="btn ghost" data-open="${u.id}">Open</button>${canDel()?` <button class="btn ghost danger" data-del="${u.id}">Delete</button>`:''}</td></tr>`).join('')+'</table></div>'+(canDel()&&L.some(x=>!x.is_active)?`<p style="margin:8px 0 0"><button id="delOlder" class="btn ghost danger">Delete all older versions (${L.filter(x=>!x.is_active).length})</button></p>`:'')
+  :'<p class="mut">No saved workbook for this semester yet. Choose a file above, then save it to the semester.</p>';
+ $('hist').querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openUpload(L.find(x=>x.id===b.dataset.open)));
+ $('hist').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delOne(L.find(x=>x.id===b.dataset.del)));
+ const dO=$('delOlder');if(dO)dO.onclick=()=>delOlder(L);
+ const act=L.find(x=>x.is_active);if(act&&OPENED!==act.id&&!skipOpen)openUpload(act)}
+/*HIST-END*/
+async function openUpload(u){
+ if(!u)return;OPENED=u.id;CURU=u;$('msg').textContent='Opening saved workbook…';
+ const r=await sb.storage.from('workbooks').download(u.storage_path);
+ if(r.error){$('msg').textContent='Could not open the saved file: '+r.error.message;return}
+ await loadBuf(await r.data.arrayBuffer(),u.file_name);
+ const e=await sb.from('schedule_edits').select('edits').eq('upload_id',u.id).maybeSingle();
+ if(e.data&&Array.isArray(e.data.edits)&&e.data.edits.length&&S){
+  const ok=[];e.data.edits.forEach(mv=>{try{applyMove(S,mv);ok.push(mv)}catch(err){console.warn('saved edit skipped',err)}});
+  EDITS=ok;SAVED=JSON.parse(JSON.stringify(ok));afterEdit();$('msg').textContent+=' '+ok.length+' saved change'+(ok.length>1?'s':'')+' applied.'}}
+async function doSave(){
+ if(!LAST||!CUR)return alert('Choose a semester and a workbook file first.');
+ const cmp=$('campSel').value;
+ if(S&&S.campus&&S.campus!==cmp&&!confirm('This workbook looks like '+S.campus+' but the campus selected is '+cmp+'. Save it as '+cmp+' anyway?'))return;
+ const path=`${CUR}/${cmp}/${Date.now()}-${LAST.name.replace(/[^\w.\-]/g,'_')}`;
+ let r=await sb.storage.from('workbooks').upload(path,new Blob([LAST.buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+ if(r.error)return alert('Upload failed: '+r.error.message);
+ await sb.from('uploads').update({is_active:false}).eq('semester_id',CUR).eq('campus',cmp).eq('is_active',true);
+ r=await sb.from('uploads').insert({semester_id:CUR,campus:cmp,storage_path:path,file_name:LAST.name,uploaded_by:ME.id,summary:S?(S.kpi||{}):{}}).select('id').single();
+ if(r.error)return alert('Could not record the upload: '+r.error.message);
+ OPENED=r.data.id;audit('workbook.save',LAST.name,{campus:cmp,semester:semName()});await loadHist();$('msg').textContent+=' Saved to the semester.'}
+$('saveUp').onclick=async()=>{const b=$('saveUp');if(b.disabled)return;b.disabled=true;try{await doSave()}finally{b.disabled=false}};
+
+// ---- arranging classes by drag and drop (admin only) ----
+function afterEdit(){renderTS();renderSC();renderTC();renderHR();renderEditBar()}
+function renderEditBar(){const b=$('editBar');
+ $('expWb').classList.toggle('hide',!(canEdit()&&S&&CURBUF&&changedCells(S).length>0));
+ if(!S||!canArrange()){b.classList.add('hide');return}
+ b.classList.remove('hide');const n=EDITS.length,dirty=JSON.stringify(EDITS)!==JSON.stringify(SAVED);
+ $('editMsg').innerHTML='<b>Arrange mode (admin)</b>: drag any class onto any slot, in <i>Schedules</i> or <i>Teacher Schedules</i>. It is always placed; clashes with a teacher or a crossed-out slot are shown in red. '+(TOUCHY?'On this device, press and hold a class for a moment, then drag it. ':'')+(n?`${n} change${n>1?'s':''}${dirty?', not saved yet':', saved'}.`:'No changes yet.')+(LASTNOTE?`<br><b>${LASTNOTE}</b>`:'');
+ $('undoBtn').disabled=!n;$('saveEdits').disabled=!dirty;$('discardEdits').disabled=!dirty}
+async function tryMove(mv){
+ if(!canArrange())return;
+ const r=checkMove(S,mv);
+ if(!r.ok){alert("This class can't be moved there:\n- "+r.reasons.join('\n- '));return}
+ const before=(S.rep&&S.rep.cf?S.rep.cf.length:0);
+ mv.note=describeMove(S,mv);mv.by=ME.name;mv.at=new Date().toISOString();
+ applyMove(S,mv);EDITS.push(mv);afterEdit();
+ const d=S.rep.cf.length-before;
+ LASTNOTE=(d>0?'Moved. This created '+d+' new conflict'+(d>1?'s':'')+', shown in red.':d<0?'Moved. '+(-d)+' conflict'+(d<-1?'s':'')+' fixed.':'Moved. No new conflicts.')+(r.warnings.length?' Note: '+r.warnings.join(' '):'');
+ renderEditBar()}
+const mvOf=td=>td.dataset.g!==undefined?{kind:'student',g:td.dataset.g,at:{day:DAYS[+td.dataset.d],time:td.dataset.t}}:{kind:'teacher',bi:+td.dataset.b,at:{day:DAYS[+td.dataset.d],time:td.dataset.t}};
+const buildMove=(a,b)=>a.kind!==b.kind?null:a.kind==='student'?{kind:'student',g:a.g,toG:b.g,from:a.at,to:b.at}:{kind:'teacher',bi:a.bi,from:a.at,toBi:b.bi,to:b.at};
+['tcOut','scGrids'].forEach(id=>{const root=$(id);
+ const clear=()=>root.querySelectorAll('.dragging,.okdrop,.nodrop').forEach(x=>x.classList.remove('dragging','okdrop','nodrop'));
+ root.addEventListener('dragstart',e=>{const td=e.target.closest&&e.target.closest('td[draggable="true"]');if(!td||!canArrange())return;
+  DRAG=mvOf(td);e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','class');td.classList.add('dragging')});
+ root.addEventListener('dragend',()=>{DRAG=null;OVER=null;clear()});
+ root.addEventListener('dragover',e=>{if(!DRAG||!canArrange())return;const td=e.target.closest('td[data-d]');if(!td)return;e.preventDefault();
+  if(td!==OVER){root.querySelectorAll('.okdrop,.nodrop').forEach(x=>x.classList.remove('okdrop','nodrop'));OVER=td;
+   const mv=buildMove(DRAG,mvOf(td)),r=mv?checkMove(S,mv):{ok:false};td.classList.add(r.ok?'okdrop':'nodrop')}});
+ root.addEventListener('drop',async e=>{e.preventDefault();const td=e.target.closest&&e.target.closest('td[data-d]'),src=DRAG;DRAG=null;OVER=null;clear();
+  if(!td||!src||!canArrange())return;const mv=buildMove(src,mvOf(td));if(mv)await tryMove(mv)})});
+
+// finger dragging (phones and tablets)
+['tcOut','scGrids'].forEach(id=>{const root=$(id);
+ const clearHover=()=>root.querySelectorAll('.okdrop,.nodrop').forEach(x=>x.classList.remove('okdrop','nodrop'));
+ const clearPick=()=>root.querySelectorAll('.dragging').forEach(x=>x.classList.remove('dragging'));
+ const ctl=createTouchDrag({
+  enabled:()=>canArrange(),
+  cellAt:(x,y)=>{const el=document.elementFromPoint(x,y),td=el&&el.closest&&el.closest('td[data-d]');return td&&root.contains(td)?td:null},
+  setTimer:(f,ms)=>setTimeout(f,ms),clearTimer:t=>clearTimeout(t),
+  onPick:td=>{DRAG=mvOf(td);td.classList.add('dragging');if(navigator.vibrate)navigator.vibrate(25)},
+  onHover:td=>{clearHover();if(td&&DRAG){const mv=buildMove(DRAG,mvOf(td)),r=mv?checkMove(S,mv):{ok:false};td.classList.add(r.ok?'okdrop':'nodrop')}},
+  onDrop:async(a,b)=>{const src=DRAG;DRAG=null;clearPick();clearHover();const mv=src&&buildMove(src,mvOf(b));if(mv)await tryMove(mv)},
+  onCancel:()=>{DRAG=null;clearPick();clearHover()},
+  scrollBy:dy=>window.scrollBy(0,dy),vh:()=>window.innerHeight});
+ root.addEventListener('touchstart',e=>{const t=e.touches[0],td=e.target.closest&&e.target.closest('td.drag');if(e.touches.length===1&&td)ctl.start(t.clientX,t.clientY,td);else ctl.cancel()},{passive:true});
+ root.addEventListener('touchmove',e=>{const t=e.touches[0];if(ctl.move(t.clientX,t.clientY))e.preventDefault()},{passive:false});
+ root.addEventListener('touchend',e=>{const t=e.changedTouches[0];if(ctl.end(t.clientX,t.clientY))e.preventDefault()});
+ root.addEventListener('touchcancel',()=>ctl.cancel());
+ root.addEventListener('contextmenu',e=>{if(ctl.active)e.preventDefault()})});
+$('undoBtn').onclick=()=>{if(!canArrange()||!EDITS.length)return;EDITS.pop();replayEdits(S,EDITS);LASTNOTE='Last change undone.';afterEdit()};
+$('saveEdits').onclick=async()=>{
+ if(!canArrange())return;
+ if(!OPENED)return alert('Save this workbook to the semester first, then save your changes.');
+ const r=await sb.from('schedule_edits').upsert({upload_id:OPENED,edits:EDITS,updated_by:ME.id,updated_at:new Date().toISOString()});
+ if(r.error)return alert('Could not save the changes: '+r.error.message+(/schedule_edits/.test(r.error.message)?' Run add_schedule_edits.sql in Supabase first.':''));
+ const ch=newMovesSince(SAVED,EDITS);audit('schedule.save',CURU?CURU.file_name:'',{campus:$('campSel').value,semester:semName(),total:EDITS.length,added:ch.added,removed:ch.removed});
+ SAVED=JSON.parse(JSON.stringify(EDITS));renderEditBar();$('msg').textContent+=' Changes saved.'};
+$('discardEdits').onclick=()=>{if(!canArrange()||!confirm('Discard the changes that are not saved yet?'))return;
+ if(CURU)openUpload(CURU);else if(CURBUF)loadBuf(CURBUF.buf,CURBUF.name)};
+
+/*EXPORT-START*/
+// A new copy of the ORIGINAL workbook with the arranged schedule written into it. The file is edited directly (not rebuilt), so colours,
+// crossed-out cells, merged cells, logos and every other sheet stay exactly as they were.
+const changedCells=S=>(S.base||[]).filter(o=>o.c.v!==o.v||o.c.fid!==o.fid);
+async function exportArranged(S,buf,deps){
+ const {JSZip,DOMParser,XMLSerializer}=deps;
+ const z=await JSZip.loadAsync(buf);
+ const parse=async p=>{const f=z.file(p);return f?new DOMParser().parseFromString(await f.async('string'),'application/xml'):null};
+ const ser=d=>{let x=new XMLSerializer().serializeToString(d);if(!/^\s*<\?xml/.test(x))x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+x;return x};
+ const wbx=await parse('xl/workbook.xml'),rel=await parse('xl/_rels/workbook.xml.rels'),st=await parse('xl/styles.xml');
+ const targets={};[...rel.getElementsByTagName('Relationship')].forEach(r=>targets[r.getAttribute('Id')]=r.getAttribute('Target'));
+ const paths={};[...wbx.getElementsByTagName('sheet')].forEach(sh=>{const t=targets[sh.getAttribute('r:id')];if(t)paths[sh.getAttribute('name')]=t.startsWith('/')?t.slice(1):'xl/'+t});
+ const changes=changedCells(S),bySheet={};
+ changes.forEach(o=>{const ref=o.c.ref||'',i=ref.lastIndexOf('!');if(i<0)return;(bySheet[ref.slice(0,i)]=bySheet[ref.slice(0,i)]||[]).push({addr:ref.slice(i+1),c:o.c})});
+ // a copy of a cell style with another fill (the colour travels with the class)
+ const xfs=st.getElementsByTagName('cellXfs')[0],list=()=>[...xfs.getElementsByTagName('xf')],clones={};
+ const styleFor=(sid,fid)=>{if(sid==null||fid==null)return sid;const key=sid+'|'+fid;if(key in clones)return clones[key];
+  const base=list()[sid];if(!base||(+base.getAttribute('fillId')||0)===fid){clones[key]=sid;return sid}
+  const n=base.cloneNode(true);n.setAttribute('fillId',String(fid));n.setAttribute('applyFill','1');xfs.appendChild(n);
+  const idx=list().length-1;xfs.setAttribute('count',String(idx+1));clones[key]=idx;return idx};
+ const colNum=a=>{let n=0;for(const ch of a.replace(/[0-9]/g,''))n=n*26+ch.charCodeAt(0)-64;return n};
+ let done=0;
+ for(const [sheet,list2] of Object.entries(bySheet)){
+  const path=paths[sheet];if(!path)continue;const doc=await parse(path);if(!doc)continue;
+  const ns=doc.documentElement.namespaceURI,sd=doc.getElementsByTagName('sheetData')[0];
+  for(const {addr,c} of list2){
+   const rowN=+addr.replace(/[A-Z]/g,'');
+   let row=[...sd.getElementsByTagName('row')].find(r=>+r.getAttribute('r')===rowN);
+   if(!row){row=doc.createElementNS(ns,'row');row.setAttribute('r',String(rowN));const after=[...sd.getElementsByTagName('row')].find(r=>+r.getAttribute('r')>rowN);after?sd.insertBefore(row,after):sd.appendChild(row)}
+   const cs=[...row.getElementsByTagName('c')];let el=cs.find(x=>x.getAttribute('r')===addr);
+   if(!el){el=doc.createElementNS(ns,'c');el.setAttribute('r',addr);const nx=cs.find(x=>colNum(x.getAttribute('r'))>colNum(addr));nx?row.insertBefore(el,nx):row.appendChild(el)}
+   while(el.firstChild)el.removeChild(el.firstChild);el.removeAttribute('t');
+   if(c.v){el.setAttribute('t','inlineStr');const is=doc.createElementNS(ns,'is'),t=doc.createElementNS(ns,'t');t.setAttribute('xml:space','preserve');t.appendChild(doc.createTextNode(c.v));is.appendChild(t);el.appendChild(is)}
+   const ns2=styleFor(c.sid,c.fid);if(ns2!=null)el.setAttribute('s',String(ns2));
+   done++}
+  z.file(path,ser(doc),{createFolders:false})}
+ z.file('xl/styles.xml',ser(st),{createFolders:false});
+ // make Excel recalculate the "Total Hours" formulas when the file is opened
+ let cp=wbx.getElementsByTagName('calcPr')[0];
+ if(!cp){cp=wbx.createElementNS(wbx.documentElement.namespaceURI,'calcPr');let ref=null;
+  for(const n of ['oleSize','customWorkbookViews','pivotCaches','smartTagPr','smartTagTypes','webPublishing','fileRecoveryPr','webPublishObjects','extLst']){ref=wbx.getElementsByTagName(n)[0];if(ref)break}
+  ref?wbx.documentElement.insertBefore(cp,ref):wbx.documentElement.appendChild(cp)}
+ cp.setAttribute('fullCalcOnLoad','1');z.file('xl/workbook.xml',ser(wbx),{createFolders:false});
+ const out=await z.generateAsync({type:'uint8array',compression:'DEFLATE'});out.changed=done;return out}
+/*EXPORT-END*/
+/*TOUCH-START*/
+// Finger dragging for phones and tablets: press and hold a class for a moment, then drag it. A quick tap or a scroll does nothing.
+// Pure controller (the page connects the real touch events), so the timing rules can be tested.
+function createTouchDrag(d){
+ const HOLD=350,SLOP=10,EDGE=70,STEP=14;
+ let state='idle',timer=null,src=null,start=null,hover=null;
+ const stop=()=>{if(timer!=null){d.clearTimer(timer);timer=null}};
+ const reset=()=>{stop();state='idle';src=null;start=null;hover=null};
+ return{
+  get active(){return state==='drag'},
+  start(x,y,cell){
+   if(!d.enabled()||!cell)return false;
+   reset();state='wait';src=cell;start={x,y};
+   timer=d.setTimer(()=>{timer=null;if(state==='wait'&&d.enabled()){state='drag';d.onPick(src)}else if(state==='wait')reset()},HOLD);
+   return true},
+  move(x,y){
+   if(state==='wait'){if(Math.hypot(x-start.x,y-start.y)>SLOP)reset();return false}
+   if(state!=='drag')return false;
+   const c=d.cellAt(x,y);if(c!==hover){hover=c;d.onHover(c)}
+   if(y<EDGE)d.scrollBy(-STEP);else if(y>d.vh()-EDGE)d.scrollBy(STEP);
+   return true},
+  end(x,y){
+   if(state!=='drag'){reset();return false}
+   const s=src,dst=d.cellAt(x,y);reset();d.onHover(null);
+   if(dst&&dst!==s)d.onDrop(s,dst);else d.onCancel();
+   return true},
+  cancel(){const was=state==='drag';reset();if(was){d.onHover(null);d.onCancel()}}}}
+/*TOUCH-END*/
+/*PASSWORD-START*/
+// A signed-in person changes their OWN password. The current password is asked again, so a borrowed screen cannot change it.
+function checkPasswordChange(v){
+ const e=[],cur=String(v.current==null?'':v.current),nw=String(v.next==null?'':v.next),again=String(v.again==null?'':v.again);
+ if(!cur)e.push('Enter your current password.');
+ if(nw.length<8)e.push('The new password needs at least 8 characters.');else if(nw.length>72)e.push('The new password can have at most 72 characters.');
+ else if(nw===cur)e.push('The new password must be different from the current one.');
+ if(nw&&again!==nw)e.push('The two new passwords are not the same.');
+ return e}
+async function changeOwnPassword(sb,email,v){
+ const e=checkPasswordChange(v);if(e.length)return{error:e.join(' ')};
+ const re=await sb.auth.signInWithPassword({email,password:v.current});
+ if(re.error)return{error:'The current password is not correct.'};
+ const up=await sb.auth.updateUser({password:v.next});
+ return up.error?{error:up.error.message}:{ok:true}}
+/*PASSWORD-END*/
+/*AUDIT-START*/
+// History: who did what. Pure helpers (tested). A password or key is never written, whatever the caller passes.
+const SECRET_KEY=/pass(word)?|secret|token|api.?key/i;
+function scrubDetails(o,depth){if(o==null||typeof o!=='object')return o;if(Array.isArray(o))return o.map(x=>scrubDetails(x,depth+1));
+ const r={};Object.keys(o).forEach(k=>{if(!SECRET_KEY.test(k))r[k]=depth<4?scrubDetails(o[k],depth+1):o[k]});return r}
+function auditRow(me,action,target,details){
+ let d=scrubDetails(details||{},0);const j=JSON.stringify(d);if(j.length>8000)d={truncated:true,preview:j.slice(0,2000)};
+ return{actor_id:me.id,actor_name:String(me.name||'').slice(0,80),action:String(action).slice(0,60),target:target==null?null:String(target).slice(0,200),details:d}}
+// what a drag did, in words (called BEFORE the move is applied)
+function describeMove(S,mv){
+ const f=mv.from||{},t=mv.to||{},slot=x=>x.day+' '+x.time,nm=P=>P[0]+(P.length>1?' ('+P.slice(1).join(' ')+')':'');
+ if(mv.kind==='student'){
+  const L=S.layout[mv.g],A=L&&cellAt(L.rows,f.day,f.time),B=L&&cellAt(L.rows,t.day,t.time),a=A&&isClass(A)?classLines(A.cell.v):[],b=B&&isClass(B)?classLines(B.cell.v):null;
+  return 'Class '+mv.g+': '+(a.length?nm(a):'(empty)')+' moved from '+slot(f)+' to '+slot(t)+(b?', swapped with '+nm(b):'')}
+ const B1=S.blocks[mv.bi],bj=mv.toBi==null?mv.bi:mv.toBi,B2=S.blocks[bj],A=B1&&cellAt(B1.rows,f.day,f.time),P=classLines((A&&blocksOf(A.cell.v)[mv.k||0])||'');
+ return (B1?B1.display:'?')+': '+(P[0]||'class')+(P[1]?' ('+P[1]+')':'')+' moved from '+slot(f)+' to '+(bj!==mv.bi&&B2?B2.display+' at ':'')+slot(t)}
+// which moves are new since the last save (and how many saved ones were undone)
+function newMovesSince(saved,edits){
+ let k=0;while(k<saved.length&&k<edits.length&&JSON.stringify(saved[k])===JSON.stringify(edits[k]))k++;
+ return{added:edits.slice(k).map(m=>({note:m.note||'',by:m.by||'',at:m.at||''})),removed:saved.length-k}}
+function summarizeAudit(r){
+ const d=r.details||{},t=r.target||'';
+ switch(r.action){
+ case 'schedule.save':{const add=d.added||[],head='Saved '+(d.total!=null?d.total+' arrangement change'+(d.total===1?'':'s'):'arrangement changes')+' of '+t+(d.campus?' ('+d.campus+(d.semester?', '+d.semester:'')+')':'')+(add.length?', '+add.length+' new':'')+(d.removed?', '+d.removed+' undone':'')+'.';
+  const lines=add.slice(0,10).map(m=>'\u2022 '+(m.note||'a move')+(m.by?' (by '+m.by+')':''));if(add.length>10)lines.push('\u2022 and '+(add.length-10)+' more');return[head].concat(lines)}
+ case 'workbook.save':return['Saved the workbook '+t+(d.campus?' for '+d.campus:'')+(d.semester?', '+d.semester:'')+'.'];
+ case 'workbook.delete':return['Deleted the saved workbook'+(d.count>1?'s':'')+' '+t+'.'];
+ case 'workbook.export':return['Downloaded the arranged workbook of '+t+(d.cells!=null?' ('+d.cells+' cells changed)':'')+'.'];
+ case 'semester.create':return['Created the semester '+t+'.'];
+ case 'campus.add':return['Added the campus '+t+'.'];
+ case 'campus.remove':return['Removed the campus '+t+'.'];
+ case 'password.change':return['Changed their own password.'];
+ case 'user.create':return['Created the user '+t+(d.role?' ('+d.role+')':'')+'.'];
+ case 'user.role':return[t+' is now a '+d.role+'.'];
+ case 'user.reset_password':return['Reset the password of '+t+'.'];
+ case 'user.disable':return['Disabled the account of '+t+'.'];
+ case 'user.enable':return['Enabled the account of '+t+'.'];
+ case 'user.delete':return['Deleted the user '+t+'.'];
+ default:return[String(r.action)+(t?': '+t:'')]}}
+const confirmDelete=(typed,username)=>!!username&&String(typed==null?'':typed).trim().toLowerCase()===String(username).trim().toLowerCase();
+/*AUDIT-END*/
+/*HOMEROOM-START*/
+// Homeroom teachers come ONLY from the "Home room" column of the TIMESHEET. A teacher with two classes is written like 6A/6B.
+// The teacher schedules are NOT used to decide who is a homeroom teacher: they also hold homeroom periods of other campuses.
+const HR_NONE=/^(n\/?a|none|no|nil|0+|-+|\u2014|\u2013|x)$/i;
+function splitHomeroom(raw){
+ const v=clean(raw);if(!v||HR_NONE.test(v))return[];
+ const seen=new Set(),out=[];
+ v.split(/\s*(?:[\/,;&+]|\band\b)\s*/i).map(clean).filter(Boolean).forEach(x=>{const k=code(x);if(k&&!seen.has(k)){seen.add(k);out.push(x)}});
+ return out}
+const classOrder=c=>{const m=String(c).match(/^(\d+)(.*)$/);return m?m[1].padStart(3,'0')+m[2]:'999'+c};
+// one row per (teacher, class) written in the TIMESHEET, plus a red row for every class of this campus that has nobody
+function homeroomRows(S){
+ if(!S.ts.some(t=>splitHomeroom(t.hr).length))return[];
+ const labels={};Object.keys(S.layout).forEach(g=>{const k=code(g);if(!labels[k])labels[k]=g.replace(/\s*#\d+$/,'')});
+ const rows=[],byC={},SEV={ok:0,org:1,yel:2,red:3};
+ S.ts.forEach(t=>{splitHomeroom(t.hr).forEach(x=>{const c=code(x),slots=[];
+  S.blocks.forEach(b=>{if(b.name!==t.name)return;b.entries.forEach(e=>{if(/^homeroom/i.test(clean(e.subject))&&code(e.grade)===c&&mineCampus(S,e.campus))slots.push({day:e.day,time:e.time})})});
+  const r={c,label:labels[c]||x,teacher:t.display,name:t.name,sub:t.subject,phone:t.phone,raw:t.hr,slots,sev:'ok',st:'OK'};rows.push(r);(byC[c]=byC[c]||[]).push(r)})});
+ const up=(r,sev,m)=>{r.st=r.st==='OK'?m:r.st+'; '+m;if(SEV[sev]>SEV[r.sev])r.sev=sev};
+ Object.values(byC).forEach(list=>{if(list.length>1){const names=list.map(r=>r.teacher).join(' and ');list.forEach(r=>up(r,'yel','Two homeroom teachers: '+names))}});
+ if(Object.keys(labels).length)rows.forEach(r=>{if(!labels[r.c]&&r.st==='OK')r.st="Class of another campus (not in this campus's class schedule)"});
+ Object.keys(labels).forEach(c=>{if(!byC[c])rows.push({c,label:labels[c],teacher:'No homeroom teacher',name:'',sub:'',phone:'',raw:'',slots:[],sev:'red',st:'No homeroom teacher listed in the TIMESHEET'})});
+ return rows.sort((a,b)=>classOrder(a.c)<classOrder(b.c)?-1:classOrder(a.c)>classOrder(b.c)?1:0)}
+/*HOMEROOM-END*/
+/*TIME-START*/
+// Class schedules and teacher schedules may cut the day differently (50-minute periods and 25-minute rows).
+// Two slots count as "the same time" when their time ranges overlap, so a cell 10:00 - 10:25 AM matches the period 10:00 - 10:50 AM.
+function timeRange(label){
+ const m=String(label==null?'':label).match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);if(!m)return null;
+ const pm=/pm/i.test(m[5]),mins=(h,mi)=>((+h%12)+(pm?12:0))*60+ +mi,e=mins(m[3],m[4]);let st=mins(m[1],m[2]);if(st>e)st-=720;
+ return{s:st,e}}
+function slotsOverlap(a,b){
+ if(a===b)return true;const x=timeRange(a),y=timeRange(b);if(!x||!y)return false;
+ return Math.max(x.s,y.s)<Math.min(x.e,y.e)}
+// groups items that share a key and whose times overlap (chains of overlaps form one group)
+function overlapGroups(list,key){
+ const by={};list.forEach(e=>{(by[key(e)]=by[key(e)]||[]).push(e)});const out=[];
+ Object.values(by).forEach(arr=>{const p=arr.map((_,i)=>i),f=i=>p[i]===i?i:(p[i]=f(p[i]));
+  for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)if(slotsOverlap(arr[i].time,arr[j].time))p[f(i)]=f(j);
+  const g={};arr.forEach((e,i)=>{(g[f(i)]=g[f(i)]||[]).push(e)});Object.values(g).forEach(c=>out.push(c))});
+ return out}
+/*TIME-END*/
+/*CAMPUS-START*/
+// The campus list is kept in the database and edited by admins. These helpers are pure so they can be tested.
+const CAMPUS_RE=/^[A-Z0-9][A-Z0-9 _-]{0,19}$/;
+function checkCampus(raw,existing){
+ const n=String(raw==null?'':raw).trim().replace(/\s+/g,' ').toUpperCase();
+ if(!n)return{error:'Enter the campus name.'};
+ if(!CAMPUS_RE.test(n))return{error:'Use letters, numbers, spaces, dash or underscore (up to 20 characters, starting with a letter or number).'};
+ if((existing||[]).some(x=>String(x).toUpperCase()===n))return{error:n+' is already in the list.'};
+ return{name:n}}
+// Which campus is this workbook for? 1) the campus cell of the class sheets ("BTB1 Campus"), 2) the file name ("8_BTB1_11_SEP..."), 3) the Timesheet heading.
+function campusName(label,fileName,timesheetText){
+ const a=clean(label).replace(/\s*campus\s*$/i,'').trim();
+ if(a&&/^[A-Za-z0-9][A-Za-z0-9 _-]{0,19}$/.test(a))return a.toUpperCase();
+ const f=String(fileName||'').match(/^\d+[_\- ]+([A-Za-z][A-Za-z0-9]{1,14})[_\- ]/);if(f)return f[1].toUpperCase();
+ const t=clean(timesheetText).match(/\b([A-Za-z][A-Za-z0-9]{1,14})\s+Camp/i);return t?t[1].toUpperCase():''}
+async function addCampusRow(sb,name,order,userId){
+ const r=await sb.from('campuses').insert({name,sort_order:order,created_by:userId});
+ return r.error?{error:r.error.message}:{ok:true}}
+async function removeCampusRow(sb,name,all){
+ if((all||[]).length<=1)return{error:'Keep at least one campus.'};
+ const c=await sb.from('uploads').select('id',{count:'exact',head:true}).eq('campus',name);
+ if(c.error)return{error:c.error.message};
+ if(c.count>0)return{error:name+' has '+c.count+' saved workbook'+(c.count>1?'s':'')+'. Delete them first, or keep the campus.'};
+ const d=await sb.from('campuses').delete().eq('name',name);
+ return d.error?{error:d.error.message}:{ok:true}}
+/*CAMPUS-END*/
+/*ADMIN-START*/
+// Rules for a new account (the server function applies the same rules again). Pure functions, tested.
+const ROLE_LIST=['viewer','registrar','admin'];
+function checkNewUser(u){
+ const e=[],name=String(u.username==null?'':u.username).trim(),pw=String(u.password==null?'':u.password);
+ if(!name)e.push('Enter a username.');
+ else if(name.indexOf('@')>=0)e.push('Use a short username, not an email address.');
+ else if(!loginEmail(name))e.push('The username may use letters a-z, numbers, dot, dash and underscore (no spaces).');
+ if(pw.length<8)e.push('The password needs at least 8 characters.');else if(pw.length>72)e.push('The password can have at most 72 characters.');
+ if(ROLE_LIST.indexOf(u.role)<0)e.push('Choose a role.');
+ return e}
+// A password that is easy to read out: no 0/O, 1/l/I. Always has a small letter, a capital and a digit. rnd(n) must return 0..n-1.
+function makePassword(len,rnd){
+ len=len||12;const L='abcdefghjkmnpqrstuvwxyz',U='ABCDEFGHJKMNPQRSTUVWXYZ',D='23456789',all=L+U+D,pick=s=>s[rnd(s.length)];
+ const out=[pick(L),pick(U),pick(D)];while(out.length<len)out.push(pick(all));
+ for(let i=out.length-1;i>0;i--){const j=rnd(i+1);const t=out[i];out[i]=out[j];out[j]=t}
+ return out.join('')}
+/*ADMIN-END*/
+const cryptoRnd=n=>{const a=new Uint32Array(1),lim=Math.floor(4294967296/n)*n;do{crypto.getRandomValues(a)}while(a[0]>=lim);return a[0]%n};
+
+async function audit(action,target,details){if(!ME||!sb)return;try{await sb.from('audit_log').insert(auditRow(ME,action,target,details))}catch(e){}}
+const semName=()=>(SEMS.find(x=>x.id===CUR)||{}).name||'';
+
+// ---- Administrative tab (admins only) ----
+const canAdmin=()=>!!ME&&ME.role==='admin';
+let USERS=[];
+const fmtDate=x=>{try{return new Date(x).toLocaleDateString()}catch(e){return ''}};
+function setAdMsg(html,isErr){const m=$('adMsg');m.innerHTML=html;m.className='adnote'+(isErr?' err':'')}
+async function adminCall(body){
+ const r=await sb.functions.invoke('admin-users',{body});
+ if(r.error){let msg=r.error.message||'The request failed.';
+  try{const res=r.error.context;
+   if(res&&res.status===404)msg='The admin-users function is not set up yet. Follow step 11 of the README to deploy it in Supabase.';
+   else if(res&&typeof res.json==='function'){const j=await res.json();if(j&&j.error)msg=j.error}
+   else if(r.error.name==='FunctionsFetchError')msg='Could not reach the admin-users function. Check that it is deployed in Supabase (step 11 of the README).'}catch(e){}
+  throw new Error(msg)}
+ if(r.data&&r.data.error)throw new Error(r.data.error);
+ return r.data}
+async function loadUsers(){
+ if(!canAdmin())return;
+ $('adUsers').innerHTML='<p class="mut">Loading the users…</p>';
+ try{const d=await adminCall({action:'list'});USERS=d.users||[];renderUsers()}
+ catch(err){$('adUsers').innerHTML='';setAdMsg(esc(err.message),true)}}
+function renderUsers(){
+ if(!USERS.length){$('adUsers').innerHTML='<p class="mut">No users yet.</p>';return}
+ $('adUsers').innerHTML='<table><tr><th>Username</th><th>Name</th><th>Role</th><th>Created</th><th>Last sign-in</th><th>Status</th><th></th></tr>'+USERS.map(u=>{const me=ME&&u.id===ME.id;
+  return`<tr><td><b>${esc(u.username)}</b>${me?' <span class="mut">(you)</span>':''}</td><td>${esc(u.full_name)}</td>`+
+  `<td><select data-role="${esc(u.id)}"${me?' disabled title="You cannot change your own role"':''}>${ROLE_LIST.map(r=>`<option${r===u.role?' selected':''}>${r}</option>`).join('')}</select></td>`+
+  `<td>${esc(fmtDate(u.created_at))}</td><td>${esc(u.last_sign_in_at?fmtDate(u.last_sign_in_at):'never')}</td><td>${u.disabled?pill('red','Disabled'):pill('grn','Active')}</td>`+
+  `<td class="n"><button class="btn ghost" data-pw="${esc(u.id)}">Reset password</button>${me?'':` <button class="btn ghost danger" data-dis="${esc(u.id)}" data-to="${u.disabled?0:1}">${u.disabled?'Enable':'Disable'}</button> <button class="btn ghost danger" data-del="${esc(u.id)}">Delete</button>`}</td></tr>`}).join('')+'</table>'}
+let HIST_ROWS=[];
+async function loadHistory(){
+ if(!canAdmin())return;
+ $('adHist').innerHTML='<p class="mut">Loading the history…</p>';
+ const r=await sb.from('audit_log').select('at,actor_name,action,target,details').order('at',{ascending:false}).limit(300);
+ if(r.error){$('adHist').innerHTML='<p class="mut">The history is not set up yet. Run add_history_and_user_deletion.sql in Supabase (README step 13). '+esc(r.error.message)+'</p>';return}
+ HIST_ROWS=r.data||[];renderHistory()}
+function renderHistory(){
+ const f=($('hiF').value||'').split('|').filter(Boolean),rows=HIST_ROWS.filter(x=>!f.length||f.some(p=>String(x.action).startsWith(p)));
+ if(!rows.length){$('adHist').innerHTML='<p class="mut">Nothing in the history yet.</p>';return}
+ $('adHist').innerHTML='<table class="hist"><tr><th>When</th><th>Who</th><th>What</th></tr>'+rows.map(x=>`<tr><td class="when">${esc(new Date(x.at).toLocaleString())}</td><td><b>${esc(x.actor_name)}</b></td><td>${summarizeAudit(x).map(esc).join('<br>')}</td></tr>`).join('')+'</table>'}
+$('hiF').onchange=()=>{if(canAdmin())renderHistory()};
+$('hiRef').onclick=()=>{if(canAdmin())loadHistory()};
+$('nuGen').onclick=()=>{if(!canAdmin())return;$('nuPass').value=makePassword(12,cryptoRnd)};
+$('nuMake').onclick=async()=>{
+ if(!canAdmin())return;
+ const u={username:$('nuName').value.trim().toLowerCase(),password:$('nuPass').value,role:$('nuRole').value,full_name:$('nuFull').value.trim()},e=checkNewUser(u);
+ if(e.length){setAdMsg(esc(e.join(' ')),true);return}
+ const b=$('nuMake');b.disabled=true;
+ try{await adminCall({action:'create',username:u.username,password:u.password,role:u.role,full_name:u.full_name});
+  setAdMsg(`User created. Username: <b>${esc(u.username)}</b> &nbsp; Password: <b>${esc(u.password)}</b> &nbsp; Role: ${esc(u.role)}.<br>Give these to the person now. The password cannot be shown again.`);
+  $('nuName').value='';$('nuFull').value='';$('nuPass').value='';await loadUsers()}
+ catch(err){setAdMsg(esc(err.message),true)}
+ finally{b.disabled=false}};
+$('adUsers').addEventListener('change',async e=>{
+ const sel=e.target.closest&&e.target.closest('select[data-role]');if(!sel||!canAdmin())return;
+ const u=USERS.find(x=>x.id===sel.dataset.role);if(!u)return;
+ try{await adminCall({action:'set_role',id:u.id,role:sel.value});u.role=sel.value;setAdMsg(`<b>${esc(u.username)}</b> is now a ${esc(sel.value)}.`)}
+ catch(err){sel.value=u.role;setAdMsg(esc(err.message),true)}});
+$('adUsers').addEventListener('click',async e=>{
+ if(!canAdmin())return;
+ const pw=e.target.closest&&e.target.closest('button[data-pw]'),dis=e.target.closest&&e.target.closest('button[data-dis]'),del=e.target.closest&&e.target.closest('button[data-del]');
+ if(pw){const u=USERS.find(x=>x.id===pw.dataset.pw);if(!u)return;
+  const typed=prompt('New password for '+u.username+' (at least 8 characters).\nLeave empty to make one for you.');if(typed===null)return;
+  const np=typed.trim()||makePassword(12,cryptoRnd);
+  try{await adminCall({action:'reset_password',id:u.id,password:np});setAdMsg(`New password for <b>${esc(u.username)}</b>: <b>${esc(np)}</b>.<br>Give it to the person now. It cannot be shown again.`)}
+  catch(err){setAdMsg(esc(err.message),true)}}
+ if(del){const u=USERS.find(x=>x.id===del.dataset.del);if(!u||u.id===ME.id)return;
+  const typed=prompt('This permanently deletes the user '+u.username+'.\nTheir saved work stays, but will show no uploader. The history keeps their name.\nIf they only need to be blocked for a while, use Disable instead.\n\nType the username to confirm:');if(typed===null)return;
+  if(!confirmDelete(typed,u.username)){setAdMsg('The name did not match, so nothing was deleted.',true);return}
+  try{await adminCall({action:'delete_user',id:u.id});await loadUsers();setAdMsg(`The user <b>${esc(u.username)}</b> was deleted.`);loadHistory()}
+  catch(err){setAdMsg(esc(err.message),true)}}
+ if(dis){const u=USERS.find(x=>x.id===dis.dataset.dis);if(!u)return;const off=dis.dataset.to==='1';
+  if(off&&!confirm('Disable '+u.username+'? They will not be able to sign in until you enable the account again.'))return;
+  try{await adminCall({action:'set_disabled',id:u.id,disabled:off});await loadUsers();setAdMsg(`<b>${esc(u.username)}</b> is now ${off?'disabled':'active'}.`)}
+  catch(err){setAdMsg(esc(err.message),true)}}});
+
+// ---- campus list (loaded from the database, edited in the Administrative tab) ----
+async function loadCampuses(){
+ const r=await sb.from('campuses').select('name,sort_order').order('sort_order').order('name');
+ CAMP_DB=!r.error&&!!r.data&&r.data.length>0;
+ CAMP_ROWS=CAMP_DB?r.data:CAMPUSES.map((n,i)=>({name:n,sort_order:i+1}));
+ CAMPUSES=CAMP_ROWS.map(x=>x.name);
+ const cur=$('campSel').value;
+ $('campSel').innerHTML=CAMPUSES.map(n=>`<option>${esc(n)}</option>`).join('');
+ if(CAMPUSES.includes(cur))$('campSel').value=cur;
+ renderCampList()}
+function renderCampList(){
+ const box=$('campList');if(!box)return;
+ box.innerHTML=CAMPUSES.map(n=>`<span class="chipc">${esc(n)}${canAdmin()?` <button type="button" data-rmc="${esc(n)}" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}">&times;</button>`:''}</span>`).join('')+
+  (CAMP_DB?'':'<span class="mut" style="font-size:13px">The list is not saved in the database yet. Run add_campuses.sql in Supabase (README step 12), then reload.</span>')}
+$('ncAdd').onclick=async()=>{
+ if(!canAdmin())return;
+ const c=checkCampus($('ncName').value,CAMPUSES);if(c.error){setAdMsg(esc(c.error),true);return}
+ if(!CAMP_DB){setAdMsg('Run add_campuses.sql in Supabase first (README step 12), then reload this page and try again.',true);return}
+ const r=await addCampusRow(sb,c.name,CAMP_ROWS.reduce((m,x)=>Math.max(m,x.sort_order||0),0)+1,ME.id);
+ if(r.error){setAdMsg(esc(r.error),true);return}
+ audit('campus.add',c.name);$('ncName').value='';await loadCampuses();setAdMsg(`Campus <b>${esc(c.name)}</b> added. It is now in the Campus box.`)};
+$('campList').addEventListener('click',async e=>{
+ const b=e.target.closest&&e.target.closest('button[data-rmc]');if(!b||!canAdmin())return;
+ const name=b.dataset.rmc;if(!confirm('Remove campus '+name+' from the list?'))return;
+ const r=await removeCampusRow(sb,name,CAMPUSES);
+ if(r.error){setAdMsg(esc(r.error),true);return}
+ audit('campus.remove',name);const cur=$('campSel').value;await loadCampuses();if($('campSel').value!==cur&&CUR){OPENED=null;loadHist(true)}
+ setAdMsg(`Campus <b>${esc(name)}</b> removed from the list.`)});
+
+$('expWb').onclick=async()=>{
+ if(!canEdit()||!S||!CURBUF)return;
+ const b=$('expWb');b.disabled=true;
+ try{const out=await exportArranged(S,CURBUF.buf,{JSZip,DOMParser,XMLSerializer});
+  const name=(CURBUF.name||'workbook.xlsx').replace(/\.xlsx?$/i,'')+'_ARRANGED.xlsx';
+  const url=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+  audit('workbook.export',name,{cells:out.changed});$('msg').textContent+=' Arranged workbook downloaded ('+out.changed+' cells changed).'}
+ catch(err){alert('Could not build the arranged workbook: '+err.message)}
+ finally{b.disabled=false}};
+
+// ---- change my own password ----
+function setPw(text,isErr){const m=$('pwMsg');m.textContent=text;m.style.color=isErr?'#b42318':''}
+function openPw(){['pwCur','pwNew','pwNew2'].forEach(i=>{$(i).value=''});setPw('Enter your current password, then a new one.',false);$('pwBox').classList.remove('hide');$('pwCur').focus&&$('pwCur').focus()}
+$('pwCancel').onclick=()=>{['pwCur','pwNew','pwNew2'].forEach(i=>{$(i).value=''});$('pwBox').classList.add('hide')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('pwBox').classList.contains('hide'))$('pwCancel').onclick()});
+$('pwSave').onclick=async()=>{
+ if(!ME)return;
+ const v={current:$('pwCur').value,next:$('pwNew').value,again:$('pwNew2').value},b=$('pwSave');b.disabled=true;
+ try{const r=await changeOwnPassword(sb,ME.email,v);
+  if(r.error){setPw(r.error,true);return}
+  ['pwCur','pwNew','pwNew2'].forEach(i=>{$(i).value=''});audit('password.change',ME.name);setPw('Your password was changed. Use the new one the next time you sign in.',false)}
+ catch(err){setPw(err.message,true)}
+ finally{b.disabled=false}};
+$('expBtn').onclick=()=>{
+ if(!S||!S.rep){alert('Open a workbook first.');return}
+ const sem=SEMS.find(x=>x.id===CUR);
+ const meta={campus:S.campus||$('campSel').value,semester:sem?sem.name:$('sem').textContent,date:new Date().toISOString().slice(0,10),mode:$('mode').value==='counted'?'Periods counted in the Timesheet grid':'Teaching hours/week'};
+ const wb=XLSX.utils.book_new();
+ buildReport(S,meta).forEach(sh=>{const ws=XLSX.utils.aoa_to_sheet(sh.rows);ws['!cols']=sh.widths.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,sh.name)});
+ XLSX.writeFile(wb,reportName(meta))};
+boot();
+</script></body></html>
