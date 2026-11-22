@@ -1078,13 +1078,13 @@ $('nuMake').onclick=async()=>{
  const b=$('nuMake');b.disabled=true;
  try{await adminCall({action:'create',username:u.username,password:u.password,role:u.role,full_name:u.full_name});
   setAdMsg(`User created. Username: <b>${esc(u.username)}</b> &nbsp; Password: <b>${esc(u.password)}</b> &nbsp; Role: ${esc(u.role)}.<br>Give these to the person now. The password cannot be shown again.`);
-  $('nuName').value='';$('nuFull').value='';$('nuPass').value='';await loadUsers()}
+  $('nuName').value='';$('nuFull').value='';$('nuPass').value='';await loadUsers();loadHistory()}
  catch(err){setAdMsg(esc(err.message),true)}
  finally{b.disabled=false}};
 $('adUsers').addEventListener('change',async e=>{
  const sel=e.target.closest&&e.target.closest('select[data-role]');if(!sel||!canAdmin())return;
  const u=USERS.find(x=>x.id===sel.dataset.role);if(!u)return;
- try{await adminCall({action:'set_role',id:u.id,role:sel.value});u.role=sel.value;setAdMsg(`<b>${esc(u.username)}</b> is now a ${esc(sel.value)}.`)}
+ try{await adminCall({action:'set_role',id:u.id,role:sel.value});u.role=sel.value;setAdMsg(`<b>${esc(u.username)}</b> is now a ${esc(sel.value)}.`);loadHistory()}
  catch(err){sel.value=u.role;setAdMsg(esc(err.message),true)}});
 $('adUsers').addEventListener('click',async e=>{
  if(!canAdmin())return;
@@ -1092,7 +1092,7 @@ $('adUsers').addEventListener('click',async e=>{
  if(pw){const u=USERS.find(x=>x.id===pw.dataset.pw);if(!u)return;
   const typed=prompt('New password for '+u.username+' (at least 8 characters).\nLeave empty to make one for you.');if(typed===null)return;
   const np=typed.trim()||makePassword(12,cryptoRnd);
-  try{await adminCall({action:'reset_password',id:u.id,password:np});setAdMsg(`New password for <b>${esc(u.username)}</b>: <b>${esc(np)}</b>.<br>Give it to the person now. It cannot be shown again.`)}
+  try{await adminCall({action:'reset_password',id:u.id,password:np});setAdMsg(`New password for <b>${esc(u.username)}</b>: <b>${esc(np)}</b>.<br>Give it to the person now. It cannot be shown again.`);loadHistory()}
   catch(err){setAdMsg(esc(err.message),true)}}
  if(del){const u=USERS.find(x=>x.id===del.dataset.del);if(!u||u.id===ME.id)return;
   const typed=prompt('This permanently deletes the user '+u.username+'.\nTheir saved work stays, but will show no uploader. The history keeps their name.\nIf they only need to be blocked for a while, use Disable instead.\n\nType the username to confirm:');if(typed===null)return;
@@ -1101,7 +1101,7 @@ $('adUsers').addEventListener('click',async e=>{
   catch(err){setAdMsg(esc(err.message),true)}}
  if(dis){const u=USERS.find(x=>x.id===dis.dataset.dis);if(!u)return;const off=dis.dataset.to==='1';
   if(off&&!confirm('Disable '+u.username+'? They will not be able to sign in until you enable the account again.'))return;
-  try{await adminCall({action:'set_disabled',id:u.id,disabled:off});await loadUsers();setAdMsg(`<b>${esc(u.username)}</b> is now ${off?'disabled':'active'}.`)}
+  try{await adminCall({action:'set_disabled',id:u.id,disabled:off});await loadUsers();setAdMsg(`<b>${esc(u.username)}</b> is now ${off?'disabled':'active'}.`);loadHistory()}
   catch(err){setAdMsg(esc(err.message),true)}}});
 
 // ---- campus list (loaded from the database, edited in the Administrative tab) ----
