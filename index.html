@@ -16,7 +16,7 @@
 /* ---- 1. TOKENS ---- */
 :root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
  /* brand */
- --navy:#112542;--teal:#087F80;--teal-hover:#066D6E;--teal-press:#055C5D;--teal-soft:#E4F3F3;--teal-on-navy:#3DBDBE;
+ --navy:#112542;--navy-2:#1B3560;--teal:#087F80;--teal-hover:#066D6E;--teal-press:#055C5D;--teal-soft:#E4F3F3;--teal-on-navy:#3DBDBE;
  /* surfaces and text */
  --bg:#F3F6FA;--card:#FFFFFF;--ink:#172B45;--mut:#64748B;--line:#DCE3EC;--line-strong:#B9C4D2;--hover:rgba(17,37,66,.045);
  /* status: strong colour (dots, bars, outlines) | readable ink (text) | soft fill (rows and cells) */
@@ -52,7 +52,7 @@ th.n,td.n{text-align:right}
 
 /* ---- 3. LAYOUT ---- */
 .shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
-main{padding:28px var(--sp-8) 64px;max-width:1180px;width:100%}
+main{padding:28px var(--sp-8) 64px;max-width:1600px;width:100%;min-width:0;margin:0 auto}
 
 /* ---- 4. NAVIGATION (dark navy sidebar) ---- */
 .rail{background:var(--navy);color:var(--railink);padding:22px 14px;position:sticky;top:0;align-self:start;height:100vh;display:flex;flex-direction:column;gap:22px}
@@ -74,6 +74,30 @@ main{padding:28px var(--sp-8) 64px;max-width:1180px;width:100%}
 .who .btn,.who .btn.ghost{height:var(--ctl-sm);border-color:rgba(255,255,255,.4);color:#fff}
 .who .btn:hover,.who .btn.ghost:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.6)}
 
+/* sidebar collapse button and account button */
+.railtoggle,.profbtn{all:unset;box-sizing:border-box;cursor:pointer;flex:none;display:grid;place-items:center;width:var(--ctl-sm);height:var(--ctl-sm);border-radius:var(--r-md);color:var(--railink);transition:background .15s,color .15s}
+.railtoggle:hover,.profbtn:hover{background:rgba(255,255,255,.1);color:#fff}
+.railtoggle:focus-visible,.profbtn:focus-visible{outline:2px solid #fff}
+.railtoggle{margin-left:auto}
+.railtoggle svg{transition:transform .2s}
+.profbtn{display:none;width:var(--ctl);height:var(--ctl);border-radius:50%;background:var(--teal);color:#fff;font-weight:var(--fw-bold);font-size:var(--fs-md)}
+.profbtn:hover{background:var(--teal-hover)}
+/* collapsed sidebar: icons only (desktop only) */
+@media(min-width:861px){
+ body.rail-min .shell{grid-template-columns:72px minmax(0,1fr)}
+ body.rail-min .rail{padding:22px 10px;align-items:center}
+ body.rail-min .brand{flex-direction:column;gap:var(--sp-3);padding:0}
+ body.rail-min .brand>div,body.rail-min .rail-note{display:none}
+ body.rail-min .railtoggle{margin-left:0}
+ body.rail-min .railtoggle svg{transform:rotate(180deg)}
+ body.rail-min .tabs{width:100%}
+ body.rail-min .tabs button{justify-content:center;font-size:0;gap:0;padding:0;border-left:0}
+ body.rail-min .tabs button.on{box-shadow:inset 3px 0 0 var(--teal-on-navy)}
+ body.rail-min .profbtn{display:grid;margin-top:auto}
+ body.rail-min .who{display:none;margin:0}
+ body.rail-min .rail.menu-open .who{display:grid;position:fixed;left:80px;bottom:16px;width:240px;z-index:60;background:var(--navy-2);border:1px solid rgba(255,255,255,.18);border-radius:var(--r-lg);padding:var(--sp-4);box-shadow:var(--sh-3);gap:var(--sp-2)}
+}
+
 /* ---- 5. BUTTONS ---- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);height:var(--ctl);padding:0 var(--sp-4);border-radius:var(--r-md);border:1px solid var(--teal);background:var(--teal);color:var(--accink);font:inherit;font-size:var(--fs-md);font-weight:var(--fw-semi);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
 .btn:hover{background:var(--teal-hover);border-color:var(--teal-hover)}
@@ -92,7 +116,7 @@ input[type=file]::file-selector-button{height:var(--ctl);background:var(--teal);
 input[type=file]::file-selector-button:hover{background:var(--teal-hover)}
 
 /* ---- 6. FORMS ---- */
-select,input[type=text],.authbox input{font:inherit;font-size:var(--fs-md);height:var(--ctl);padding:0 var(--sp-3);border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--card);color:var(--ink);transition:border-color .15s}
+select,input[type=text],.authbox input{max-width:100%;font:inherit;font-size:var(--fs-md);height:var(--ctl);padding:0 var(--sp-3);border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--card);color:var(--ink);transition:border-color .15s}
 select:hover,input[type=text]:hover,.authbox input:hover{border-color:var(--mut)}
 select:focus-visible,input[type=text]:focus-visible,.authbox input:focus-visible{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
 input[type=checkbox],input[type=radio]{accent-color:var(--teal)}
@@ -110,7 +134,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--teal)}
 .wb{display:flex;gap:var(--sp-4);align-items:center;flex-wrap:wrap;position:sticky;top:10px;z-index:5;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:var(--sp-5);box-shadow:0 6px 20px -12px rgba(17,37,66,.35);transition:border-color .15s}
 .wb.drag{border-color:var(--teal);border-style:dashed}
 .wb b{display:block;font-size:var(--fs-md)}
-.wb #msg{font-size:var(--fs-sm)}
+.wb #msg{font-size:var(--fs-sm);overflow-wrap:anywhere}
 .wb>div{flex:1 1 280px;min-width:0}
 .ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:var(--sp-5)}
 .ov:empty{display:none}
@@ -220,14 +244,27 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
 /* ---- 14. RESPONSIVE, TOUCH AND MOTION ---- */
 @media(max-width:860px){
  .adgrid{grid-template-columns:1fr}
- .shell{grid-template-columns:1fr}
- .rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px var(--sp-4)}
- .tabs{flex-direction:row;overflow-x:auto;gap:var(--sp-1);flex:1 1 100%}
- .tabs button{border-left:0;border-bottom:3px solid transparent;white-space:nowrap;border-radius:7px 7px 0 0}
- .tabs button.on{border-bottom-color:var(--teal-on-navy)}
+ .shell{grid-template-columns:minmax(0,1fr)}
+ .rail{position:static;height:auto;flex-direction:row;align-items:center;gap:var(--sp-3);padding:12px var(--sp-4)}
+ .brand{padding:0;min-width:0}
+ .brand>div{min-width:0}
+ .brand b,.brand small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .railtoggle{display:none}
+ .profbtn{display:grid;margin-left:auto}
+ .who{display:none;position:fixed;top:64px;right:12px;width:min(280px,calc(100vw - 24px));z-index:60;background:var(--navy-2);border:1px solid rgba(255,255,255,.18);border-radius:var(--r-lg);padding:var(--sp-4);box-shadow:var(--sh-3);margin:0;gap:var(--sp-2)}
+ .rail.menu-open .who{display:grid}
  .rail-note{display:none}
- main{padding:18px 14px 48px}
+ /* all five tabs in a bar along the bottom of the screen */
+ .tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;gap:0;background:var(--navy);border-top:1px solid rgba(255,255,255,.14);padding:var(--sp-1) var(--sp-2) calc(var(--sp-1) + env(safe-area-inset-bottom,0px))}
+ .tabs button{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:2px;min-height:56px;padding:6px 2px;font-size:11px;line-height:1.15;text-align:center;border-left:0;border-radius:var(--r-md);white-space:normal}
+ .tabs button.on{box-shadow:inset 0 2px 0 var(--teal-on-navy)}
+ main{padding:var(--sp-4) 14px calc(88px + env(safe-area-inset-bottom,0px))}
+ .wb{position:static}
  .panel{padding:18px 14px}
+ .bar label{flex-wrap:wrap;min-width:0}
+ .bar select{min-width:0;flex:1 1 160px}
+ /* wide tables scroll inside their own box; the page itself never gets wider than the screen */
+ #tsOut,#scOut,#tcOut,#hrOut,#adUsers,#adHist{overflow-x:auto}
 }
 @media(pointer:coarse){
  :root{--ctl:44px;--ctl-sm:44px}
@@ -239,7 +276,7 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
  *{transition:none!important}
  .panel,.ring{animation:none}
 }
-</style></head><body><div style="position:fixed;left:0;right:0;top:0;z-index:99999;background:#b42318;color:#fff;font:600 12px/22px sans-serif;text-align:center;letter-spacing:.04em">STAGING &#8211; test data only. Not the real system.</div><div id="auth" class="auth"><div class="authbox"><span class="mark">B3</span><h2>Schedule Checker</h2><p class="lede" id="authMsg">Sign in to continue. Ask your administrator if you need an account.</p>
+</style></head><body><div style="position:relative;z-index:99999;background:#b42318;color:#fff;font:600 12px/22px sans-serif;text-align:center;letter-spacing:.04em;padding:0 8px">STAGING &#8211; test data only. Not the real system.</div><div id="auth" class="auth"><div class="authbox"><span class="mark">B3</span><h2>Schedule Checker</h2><p class="lede" id="authMsg">Sign in to continue. Ask your administrator if you need an account.</p>
 <label>Username<input id="aMail" type="text" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
 <label>Password<input id="aPass" type="password" autocomplete="current-password"></label>
 <div class="authbtn"><button id="aIn" class="btn">Sign in</button></div></div></div>
@@ -250,9 +287,10 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
 <div class="authbtn"><button id="pwSave" class="btn" type="button">Save new password</button><button id="pwCancel" class="btn ghost" type="button">Close</button></div></div></div>
 <div class="shell">
 <aside class="rail">
-<div class="brand"><span class="mark">B3</span><div><b>Schedule Checker</b><small id="sem">Upload a workbook</small></div></div>
-<nav class="tabs" id="tabs"><button data-t="ts" class="on" aria-current="page"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Timesheets</button><button data-t="tc"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Teacher Schedules</button><button data-t="sc"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedules</button><button data-t="hr"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Homeroom</button><button data-t="ad" id="adTab" class="hide"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>Administrative</button></nav>
-<div class="who" id="who"></div>
+<div class="brand"><span class="mark">B3</span><div><b>Schedule Checker</b><small id="sem">Upload a workbook</small></div><button id="railToggle" class="railtoggle" type="button" aria-controls="tabs" aria-expanded="true" aria-label="Collapse the sidebar" title="Collapse the sidebar"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
+<nav class="tabs" id="tabs" aria-label="Main navigation"><button data-t="ts" class="on" aria-current="page" title="Timesheets"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Timesheets</button><button data-t="tc" title="Teacher Schedules"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Teacher Schedules</button><button data-t="sc" title="Schedules"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedules</button><button data-t="hr" title="Homeroom"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Homeroom</button><button data-t="ad" id="adTab" class="hide" title="Administrative"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>Administrative</button></nav>
+<button id="profBtn" class="profbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Account menu"></button>
+ <div class="who" id="who"></div>
 <p class="rail-note">Workbooks are stored privately in your school's Supabase project. Only signed-in staff can open them.</p>
 </aside>
 <main>
@@ -752,7 +790,7 @@ async function boot(){
  const {data}=await sb.auth.getSession();await onSession(data.session);
  sb.auth.onAuthStateChange((_e,sess)=>{onSession(sess)})}
 async function onSession(sess){
- if(!sess){ME=null;OPENED=null;$('auth').classList.remove('hide');$('who').innerHTML='';$('semBar').classList.add('hide');$('adTab').classList.add('hide');return}
+ if(!sess){ME=null;OPENED=null;$('auth').classList.remove('hide');$('who').innerHTML='';$('profBtn').textContent='';$('semBar').classList.add('hide');$('adTab').classList.add('hide');return}
  if(ME&&ME.id===sess.user.id)return;
  const {data}=await sb.from('profiles').select('full_name,role').eq('id',sess.user.id).single();
  ME={id:sess.user.id,email:sess.user.email,name:shortName((data&&data.full_name)||sess.user.email),role:(data&&data.role)||'viewer'};
@@ -760,6 +798,7 @@ async function onSession(sess){
  $('who').innerHTML=`<b>${esc(ME.name)}</b><small>${esc(ME.role)}</small><button id="pwBtn" class="btn ghost" type="button">Change password</button> <button id="out" class="btn ghost">Sign out</button>`;
  $('pwBtn').onclick=()=>openPw();
  $('out').onclick=()=>sb.auth.signOut();
+ $('profBtn').textContent=initialOf(ME.name);$('profBtn').setAttribute('aria-label','Account menu, '+ME.name);
  await loadSems()}
 $('aIn').onclick=async()=>{if(!sb)return;const em=loginEmail($('aMail').value);if(!em){$('authMsg').textContent='Enter your username (letters, numbers, dot, dash or underscore).';return}
  $('authMsg').textContent='Signing in…';const {error}=await sb.auth.signInWithPassword({email:em,password:$('aPass').value});if(error)$('authMsg').textContent=error.message;else $('authMsg').textContent='Signed in. Loading…'};
@@ -1073,6 +1112,25 @@ function overlapGroups(list,key){
   const g={};arr.forEach((e,i)=>{(g[f(i)]=g[f(i)]||[]).push(e)});Object.values(g).forEach(c=>out.push(c))});
  return out}
 /*TIME-END*/
+/*SHELL-START*/
+// Sidebar collapse (desktop) and account menu (phone, and the collapsed sidebar). Pure helpers, so they can be tested.
+const RAIL_KEY='btb3.rail';
+function readRailPref(storage){try{return !!storage&&storage.getItem(RAIL_KEY)==='min'}catch(e){return false}}
+function writeRailPref(storage,min){try{if(storage)storage.setItem(RAIL_KEY,min?'min':'full')}catch(e){}}
+function applyRail(root,btn,min){root.classList.toggle('rail-min',!!min);const t=min?'Expand the sidebar':'Collapse the sidebar';btn.setAttribute('aria-expanded',String(!min));btn.setAttribute('aria-label',t);btn.title=t}
+function setMenu(rail,btn,open){rail.classList.toggle('menu-open',!!open);btn.setAttribute('aria-expanded',String(!!open))}
+const initialOf=name=>(String(name==null?'':name).trim().charAt(0)||'?').toUpperCase();
+/*SHELL-END*/
+function initShell(){
+ const rail=document.querySelector('.rail'),tg=$('railToggle'),pf=$('profBtn'),root=document.body;
+ if(!rail||!tg||!pf||!root||!root.classList)return;
+ let st=null;try{st=window.localStorage}catch(e){}
+ applyRail(root,tg,readRailPref(st));
+ tg.onclick=()=>{const min=!root.classList.contains('rail-min');applyRail(root,tg,min);writeRailPref(st,min)};
+ pf.onclick=e=>{e.stopPropagation();setMenu(rail,pf,!rail.classList.contains('menu-open'))};
+ document.addEventListener('click',e=>{if(!rail.classList.contains('menu-open'))return;const t=e.target;if(!(t.closest&&t.closest('.who'))||(t.closest&&t.closest('.who button')))setMenu(rail,pf,false)});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&rail.classList.contains('menu-open')){setMenu(rail,pf,false);pf.focus()}})}
+initShell();
 /*CAMPUS-START*/
 // The campus list is kept in the database and edited by admins. These helpers are pure so they can be tested.
 const CAMPUS_RE=/^[A-Z0-9][A-Z0-9 _-]{0,19}$/;
