@@ -199,6 +199,32 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
 .adnote.err{border-left-color:var(--danger)}
 .okn{margin:0 0 var(--sp-5);border-left-color:var(--ok)}
 
+/* ---- 10b. DASHBOARD ---- */
+.dbcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:var(--sp-3);margin:var(--sp-4) 0}
+.dbcard{all:unset;box-sizing:border-box;cursor:pointer;display:grid;gap:2px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--k,var(--teal));border-radius:var(--r-lg);padding:var(--sp-4) var(--sp-5);transition:transform .15s,border-color .15s,box-shadow .15s}
+.dbcard:hover{transform:translateY(-2px);border-color:var(--k,var(--teal));box-shadow:var(--sh-3)}
+.dbcard:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.dbcard small{font-size:var(--fs-sm);color:var(--mut)}
+.dbcard b{font-size:28px;font-weight:var(--fw-semi);line-height:1.2;font-variant-numeric:tabular-nums}
+.dbcard span{font-size:var(--fs-sm);color:var(--mut)}
+.dbcard.ok{--k:var(--ok)}.dbcard.yel{--k:var(--warn)}
+.dbgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin:0 0 var(--sp-4)}
+.dbgrid .adbox,#dbAct{align-content:start}
+.adbox h3{margin:0 0 var(--sp-2);font-size:var(--fs-base)}
+.dbrow{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--sp-1) var(--sp-3);align-items:center;padding:var(--sp-2) var(--sp-2);margin:0 calc(var(--sp-2) * -1);border-radius:var(--r-md);font-size:var(--fs-md);min-height:var(--ctl-sm)}
+.dbrow:hover{background:var(--hover)}
+.dbrow:focus-visible{outline:2px solid var(--teal);outline-offset:0}
+.dbrow b{font-variant-numeric:tabular-nums}
+.dbrow.flat{border-bottom:1px solid var(--line);border-radius:0}
+.dbtrack{grid-column:1/-1;height:8px;border-radius:var(--r-pill);background:var(--line);overflow:hidden}
+.dbfill{display:block;height:100%;border-radius:var(--r-pill);background:var(--danger)}
+.dbnote{margin:var(--sp-3) 0 0;font-size:var(--fs-sm)}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--line);font-size:var(--fs-sm)}
+.feed li:last-child{border-bottom:0}
+.dbwhen{color:var(--mut);white-space:nowrap}
+.tl-short{display:none}
+
 /* ---- 11. ADMINISTRATIVE ---- */
 .adgrid{display:grid;grid-template-columns:minmax(280px,440px) 1fr;gap:var(--sp-5);margin:var(--sp-4) 0 var(--sp-2)}
 .adbox{border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-4);display:grid;gap:10px;align-content:start;font-size:var(--fs-md)}
@@ -243,8 +269,10 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
 
 /* ---- 14. RESPONSIVE, TOUCH AND MOTION ---- */
 @media(max-width:860px){
- .adgrid{grid-template-columns:1fr}
+ .adgrid,.dbgrid{grid-template-columns:1fr}
  .shell{grid-template-columns:minmax(0,1fr)}
+ .tl-full{display:none}
+ .tl-short{display:inline}
  .rail{position:static;height:auto;flex-direction:row;align-items:center;gap:var(--sp-3);padding:12px var(--sp-4)}
  .brand{padding:0;min-width:0}
  .brand>div{min-width:0}
@@ -256,7 +284,7 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
  .rail-note{display:none}
  /* all five tabs in a bar along the bottom of the screen */
  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;gap:0;background:var(--navy);border-top:1px solid rgba(255,255,255,.14);padding:var(--sp-1) var(--sp-2) calc(var(--sp-1) + env(safe-area-inset-bottom,0px))}
- .tabs button{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:2px;min-height:56px;padding:6px 2px;font-size:11px;line-height:1.15;text-align:center;border-left:0;border-radius:var(--r-md);white-space:normal}
+ .tabs button{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:2px;min-height:56px;padding:6px 2px;font-size:10.5px;line-height:1.15;text-align:center;border-left:0;border-radius:var(--r-md);white-space:normal}
  .tabs button.on{box-shadow:inset 0 2px 0 var(--teal-on-navy)}
  main{padding:var(--sp-4) 14px calc(88px + env(safe-area-inset-bottom,0px))}
  .wb{position:static}
@@ -288,7 +316,7 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
 <div class="shell">
 <aside class="rail">
 <div class="brand"><span class="mark">B3</span><div><b>Schedule Checker</b><small id="sem">Upload a workbook</small></div><button id="railToggle" class="railtoggle" type="button" aria-controls="tabs" aria-expanded="true" aria-label="Collapse the sidebar" title="Collapse the sidebar"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
-<nav class="tabs" id="tabs" aria-label="Main navigation"><button data-t="ts" class="on" aria-current="page" title="Timesheets"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Timesheets</button><button data-t="tc" title="Teacher Schedules"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Teacher Schedules</button><button data-t="sc" title="Schedules"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedules</button><button data-t="hr" title="Homeroom"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Homeroom</button><button data-t="ad" id="adTab" class="hide" title="Administrative"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>Administrative</button></nav>
+<nav class="tabs" id="tabs" aria-label="Main navigation"><button data-t="db" class="on" aria-current="page" title="Dashboard"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard</button><button data-t="ts" title="Timesheets"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Timesheets</button><button data-t="tc" title="Teacher Schedules" aria-label="Teacher Schedules"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span class="tl-full">Teacher Schedules</span><span class="tl-short" aria-hidden="true">Teachers</span></button><button data-t="sc" title="Schedules"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedules</button><button data-t="hr" title="Homeroom"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Homeroom</button><button data-t="ad" id="adTab" class="hide" title="Administrative" aria-label="Administrative"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><span class="tl-full">Administrative</span><span class="tl-short" aria-hidden="true">Admin</span></button></nav>
 <button id="profBtn" class="profbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Account menu"></button>
  <div class="who" id="who"></div>
 <p class="rail-note">Workbooks are stored privately in your school's Supabase project. Only signed-in staff can open them.</p>
@@ -299,7 +327,17 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
 <div id="hist" style="margin:-8px 0 18px"></div>
 <div class="eb hide" id="editBar"><span id="editMsg"></span><button id="undoBtn" class="btn ghost">Undo last</button><button id="saveEdits" class="btn">Save changes</button><button id="discardEdits" class="btn ghost">Discard unsaved</button></div>
 <div class="ov" id="ov"></div>
-<section id="ts" class="panel"><h2>Timesheets</h2>
+<section id="db" class="panel">
+ <h2>Dashboard</h2>
+ <p class="lede">A summary of the workbook that is open. Every number is counted from the workbook itself, nothing is estimated. Click a card to see the details.</p>
+ <p class="okn" id="dbEmpty"><b>Nothing to show yet.</b> Choose a workbook above, or open a saved one, to see the numbers.</p>
+ <div id="dbBody" class="hide">
+  <div class="dbcards" id="dbCards"></div>
+  <div class="dbgrid"><div class="adbox" id="dbConf"></div><div class="adbox" id="dbChecks"></div></div>
+ </div>
+ <div class="adbox hide" id="dbAct"></div>
+</section>
+<section id="ts" class="panel hide"><h2>Timesheets</h2>
 <p class="lede">Teacher period hours (TIMESHEET) vs. total hours in the teacher's schedule, matched by teacher name. Mismatches are highlighted yellow. Homeroom periods are not counted here; they are listed in the Homeroom tab.</p>
 <div class="bar"><label>Period hours from <select id="mode"><option value="declared">Teaching hours/week</option><option value="counted">Periods counted in timesheet grid</option></select></label>
 <label><input type="checkbox" id="tsOnly"> Mismatches only</label></div>
@@ -497,7 +535,7 @@ document.getElementById('f').addEventListener('change',async e=>{const f=e.targe
 
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('#tabs button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-current',x===b?'page':'false')});
- ['ts','tc','sc','hr','ad'].forEach(id=>$(id).classList.toggle('hide',id!==b.dataset.t));if(b.dataset.t==='ad'&&canAdmin()){loadUsers();loadHistory()}});
+ ['db','ts','tc','sc','hr','ad'].forEach(id=>$(id).classList.toggle('hide',id!==b.dataset.t));if(b.dataset.t==='db')loadActivity();if(b.dataset.t==='ad'&&canAdmin()){loadUsers();loadHistory()}});
 ['mode','tsOnly'].forEach(id=>$(id).onchange=()=>S&&renderTS());
 $('subSel').onchange=$('tcQ').oninput=()=>S&&renderTC();$('scF').onchange=$('scG').onchange=()=>S&&renderSC();
 $('hrG').onchange=$('hrOnly').onchange=()=>S&&renderHR();
@@ -525,7 +563,7 @@ function renderHR(){
   :'<p class="mut">No homeroom issues found.</p>';
  renderOV()}
 
-function renderOV(){const k=S&&S.kpi;if(!k||!k.ts||!k.sc)return;
+function renderOV(){renderDB();const k=S&&S.kpi;if(!k||!k.ts||!k.sc)return;
  const col=p=>p>=90?'ok':p>=60?'yel':'org',pc=(a,b)=>b?Math.round(a/b*100):0;
  const a=pc(k.ts.ok,k.ts.total),b=pc(k.sc.m,k.sc.total),c=k.sc.cf;
  const tile=(go,cls,p,txt,t,sub)=>`<button class="tile ${cls}" data-go="${go}"><span class="ring" style="--p:${p}"><span>${txt}</span></span><span><b>${t}</b><small>${sub}</small></span></button>`;
@@ -628,7 +666,7 @@ function renderSC(){
  $('scConf').innerHTML=cf.length?`<h3>Conflicts (${cf.length})</h3><div class="wrap" style="border:1px solid var(--line);border-radius:8px"><table><tr><th>Type</th><th>When</th><th>Teacher / Class</th><th>What is wrong</th><th>Where (sheet!cell)</th><th>Suggested fix</th></tr>`+cf.map(c=>`<tr class="red"><td><b>${esc(c.type)}</b></td><td>${c.day}<br>${esc(c.time)}</td><td>${esc(c.who)}</td><td>${esc(c.what)}</td><td>${esc(c.where)}</td><td>${esc(c.fix)}</td></tr>`).join('')+'</table></div><p class="mut" style="font-size:12.5px;margin:8px 0 0">'+((S.blocked||[]).length?'Blocked sessions are never suggested: '+esc(S.blocked.join(', '))+'.':'No sessions are blocked.')+(S.noLow?' Grade 1\u20133 classes are never moved to 11:00 - 11:50 AM; other grades can use it.':'')+'</p>'
   :'<p class="okn"><b>No conflicts found.</b> No teacher is in two classes at the same time, and no class has two teachers at the same time.</p>';
  m=rows.filter(r=>r.st==='Match').length;
- S.kpi=S.kpi||{};S.kpi.sc={m,total:St.length,cf:cf.length};
+ S.kpi=S.kpi||{};S.kpi.sc={m,total:St.length,cf:cf.length,sd,mm,bz,to};
  $('scStats').innerHTML=stat('Student periods',St.length)+stat('Match',m)+stat('Slot differs',sd)+stat('Mismatch',mm)+stat('Teacher busy',bz)+stat('Teacher-only',to)+stat('Conflicts',cf.length);
  const list=rows.filter(r=>$('scF').value==='all'||r.cls!=='grn');
  const sel=$('scG').value,hdr='<tr><th>Time</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr>';
@@ -790,7 +828,7 @@ async function boot(){
  const {data}=await sb.auth.getSession();await onSession(data.session);
  sb.auth.onAuthStateChange((_e,sess)=>{onSession(sess)})}
 async function onSession(sess){
- if(!sess){ME=null;OPENED=null;$('auth').classList.remove('hide');$('who').innerHTML='';$('profBtn').textContent='';$('semBar').classList.add('hide');$('adTab').classList.add('hide');return}
+ if(!sess){ME=null;OPENED=null;$('auth').classList.remove('hide');$('who').innerHTML='';$('profBtn').textContent='';ACT=null;renderDB();$('semBar').classList.add('hide');$('adTab').classList.add('hide');return}
  if(ME&&ME.id===sess.user.id)return;
  const {data}=await sb.from('profiles').select('full_name,role').eq('id',sess.user.id).single();
  ME={id:sess.user.id,email:sess.user.email,name:shortName((data&&data.full_name)||sess.user.email),role:(data&&data.role)||'viewer'};
@@ -798,7 +836,7 @@ async function onSession(sess){
  $('who').innerHTML=`<b>${esc(ME.name)}</b><small>${esc(ME.role)}</small><button id="pwBtn" class="btn ghost" type="button">Change password</button> <button id="out" class="btn ghost">Sign out</button>`;
  $('pwBtn').onclick=()=>openPw();
  $('out').onclick=()=>sb.auth.signOut();
- $('profBtn').textContent=initialOf(ME.name);$('profBtn').setAttribute('aria-label','Account menu, '+ME.name);
+ $('profBtn').textContent=initialOf(ME.name);$('profBtn').setAttribute('aria-label','Account menu, '+ME.name);loadActivity();
  await loadSems()}
 $('aIn').onclick=async()=>{if(!sb)return;const em=loginEmail($('aMail').value);if(!em){$('authMsg').textContent='Enter your username (letters, numbers, dot, dash or underscore).';return}
  $('authMsg').textContent='Signing in…';const {error}=await sb.auth.signInWithPassword({email:em,password:$('aPass').value});if(error)$('authMsg').textContent=error.message;else $('authMsg').textContent='Signed in. Loading…'};
@@ -1131,6 +1169,54 @@ function initShell(){
  document.addEventListener('click',e=>{if(!rail.classList.contains('menu-open'))return;const t=e.target;if(!(t.closest&&t.closest('.who'))||(t.closest&&t.closest('.who button')))setMenu(rail,pf,false)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&rail.classList.contains('menu-open')){setMenu(rail,pf,false);pf.focus()}})}
 initShell();
+/*DASH-START*/
+// Dashboard numbers. EVERY value is counted from the loaded workbook (S) or comes from the history table: nothing is invented.
+function dashboardStats(S,codeOf){
+ if(!S||!S.kpi||!S.kpi.ts||!S.kpi.sc)return null;
+ const ts=(S.rep&&S.rep.ts)||[],cf=(S.rep&&S.rep.cf)||[],k=S.kpi.sc,none=ts.filter(r=>/^No teacher schedule/i.test(String(r.status))).length,bad=ts.filter(r=>r.status==='Mismatch').length;
+ const types={};cf.forEach(c=>{types[c.type]=(types[c.type]||0)+1});
+ return{teachers:S.ts.length,withSchedule:S.ts.length-none,mismatched:bad,noSchedule:none,
+  classes:new Set(Object.keys(S.layout||{}).map(codeOf)).size,periods:k.total,matched:k.m,conflicts:cf.length,
+  byType:Object.entries(types).map(([type,n])=>({type,n})).sort((a,b)=>b.n-a.n||a.type.localeCompare(b.type)),
+  checks:{periods:k.total,match:k.m,slot:k.sd||0,mismatch:k.mm||0,busy:k.bz||0,teacherOnly:k.to||0,conflicts:cf.length}}}
+// who may see which history entries (the database enforces the same rule; this is a second layer)
+function visibleActivity(role,rows){
+ const r=Array.isArray(rows)?rows:[];
+ if(role==='admin')return r;
+ if(role==='registrar')return r.filter(x=>!/^user\./.test(String(x.action))&&x.action!=='password.change');
+ return[]}
+function timeAgo(iso,now){
+ const t=new Date(iso).getTime(),n=(now==null?Date.now():new Date(now).getTime());if(!isFinite(t)||!isFinite(n))return'';
+ const m=Math.floor((n-t)/60000);if(m<1)return'just now';if(m<60)return m+' min ago';const h=Math.floor(m/60);if(h<24)return h+' h ago';
+ const d=Math.floor(h/24);if(d===1)return'yesterday';if(d<7)return d+' days ago';return new Date(t).toISOString().slice(0,10)}
+/*DASH-END*/
+let ACT=null;
+async function loadActivity(){
+ const role=ME&&ME.role;if(role!=='admin'&&role!=='registrar'){ACT=null;renderDB();return}
+ ACT={loading:true,rows:[],err:null};renderDB();
+ try{const r=await sb.from('audit_log').select('at,actor_name,action,target,details').order('at',{ascending:false}).limit(30);
+  ACT={loading:false,rows:r.error?[]:(r.data||[]),err:r.error?r.error.message:null}}catch(e){ACT={loading:false,rows:[],err:e.message}}
+ renderDB()}
+function renderDB(){
+ const st=dashboardStats(S,code);$('dbEmpty').classList.toggle('hide',!!st);$('dbBody').classList.toggle('hide',!st);
+ if(st){
+  const card=(go,pre,label,value,sub,k)=>`<button class="dbcard ${k||''}" data-go="${go}"${pre?` data-pre="${pre}"`:''}><small>${esc(label)}</small><b>${esc(value)}</b><span>${esc(sub)}</span></button>`;
+  $('dbCards').innerHTML=card('ts','','Teachers',st.teachers,st.withSchedule+' with a teacher schedule')+card('sc','','Classes',st.classes,'in the class schedules')
+   +card('sc','','Scheduled periods',st.periods,st.matched+' match their teacher')
+   +card('ts','mismatch','Teachers with mismatched hours',st.mismatched,st.noSchedule?'and '+st.noSchedule+' without a teacher schedule':'TIMESHEET hours against the schedule',st.mismatched?'yel':'ok');
+  const mx=Math.max(1,...st.byType.map(x=>x.n));
+  $('dbConf').innerHTML='<h3>Conflicts by type</h3>'+(st.conflicts?st.byType.map(x=>`<button class="dbrow" data-go="sc" data-pre="issues"><span>${esc(x.type)}</span><b>${x.n}</b><span class="dbtrack"><span class="dbfill" style="width:${Math.round(x.n/mx*100)}%"></span></span></button>`).join('')+`<p class="mut dbnote">${st.conflicts} in total. Click a row to see them in Schedules.</p>`:'<p class="okn" style="margin:0"><b>No conflicts found.</b></p>');
+  const c=st.checks,line=(l,n,pre)=>`<button class="dbrow flat" data-go="sc"${pre?` data-pre="${pre}"`:''}><span>${l}</span><b>${n}</b></button>`;
+  $('dbChecks').innerHTML='<h3>Schedule check</h3>'+line('Student periods',c.periods)+line('Match',c.match)+line('Slot differs',c.slot,'issues')+line('Mismatch',c.mismatch,'issues')+line('Teacher busy (crossed-out slot)',c.busy,'issues')+line('Only in the teacher schedule',c.teacherOnly,'issues')+line('Conflicts',c.conflicts,'issues')}
+ const box=$('dbAct'),role=ME&&ME.role;box.classList.toggle('hide',!(ACT&&(role==='admin'||role==='registrar')));
+ if(ACT&&(role==='admin'||role==='registrar')){
+  const rows=visibleActivity(role,ACT.rows).slice(0,8);
+  box.innerHTML='<h3>Recent activity</h3>'+(ACT.loading?'<p class="mut dbnote">Loading\u2026</p>':ACT.err?'<p class="mut dbnote">Recent activity could not be loaded.</p>':rows.length?'<ul class="feed">'+rows.map(x=>`<li><span class="dbwhen">${esc(timeAgo(x.at))}</span><span><b>${esc(x.actor_name)}</b> ${esc(summarizeAudit(x)[0])}</span></li>`).join('')+'</ul>':'<p class="mut dbnote">No activity recorded yet.</p>')+(role==='admin'?'<p class="dbnote"><button class="btn ghost" type="button" data-go="ad">View the full history</button></p>':'')}}
+$('db').addEventListener('click',e=>{const t=e.target.closest('[data-go]');if(!t)return;const pre=t.dataset.pre;
+ if(pre==='mismatch'){$('tsOnly').checked=true;S&&renderTS()}
+ else if(pre==='issues'){const o=[...$('scF').options].find(x=>x.value!=='all');if(o){$('scF').value=o.value;S&&renderSC()}}
+ const b=document.querySelector('#tabs [data-t="'+t.dataset.go+'"]');b&&b.click()});
+renderDB();
 /*CAMPUS-START*/
 // The campus list is kept in the database and edited by admins. These helpers are pure so they can be tested.
 const CAMPUS_RE=/^[A-Z0-9][A-Z0-9 _-]{0,19}$/;
