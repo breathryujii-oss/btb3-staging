@@ -225,6 +225,14 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
 .dbwhen{color:var(--mut);white-space:nowrap}
 .tl-short{display:none}
 
+/* ---- 8b. TIMESHEETS ---- */
+#ts .bar{background:#F8FAFD;color:var(--ink);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin:var(--sp-4) 0 0}
+#tsOut{max-height:72vh;overflow:auto}
+.ts-table th{position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--line)}
+.ts-table td.diff{font-weight:var(--fw-semi)}
+.ts-table td.diff:not(.off){color:var(--mut);font-weight:400}
+.ts-table td.st{white-space:nowrap}
+
 /* ---- 11. ADMINISTRATIVE ---- */
 .adgrid{display:grid;grid-template-columns:minmax(280px,440px) 1fr;gap:var(--sp-5);margin:var(--sp-4) 0 var(--sp-2)}
 .adbox{border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-4);display:grid;gap:10px;align-content:start;font-size:var(--fs-md)}
@@ -291,6 +299,40 @@ summary{cursor:pointer;color:var(--teal);font-size:var(--fs-sm)}
  .panel{padding:18px 14px}
  .bar label{flex-wrap:wrap;min-width:0}
  .bar select{min-width:0;flex:1 1 160px}
+ /* Timesheets: one compact card per teacher instead of a ten-column table */
+ #tsOut{max-height:none;overflow:visible;border:0!important}
+ .ts-table,.ts-table tbody{display:block}
+ .ts-table tr.hd{display:none}
+ .ts-table tr{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px var(--sp-2);background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:var(--r-lg);padding:var(--sp-3);margin-bottom:var(--sp-3)}
+ .ts-table tr.yel{border-left-color:var(--warn);background:var(--yel)}
+ .ts-table tr.org{border-left-color:var(--attn);background:var(--org)}
+ .ts-table tr.yel,.ts-table tr.org{--mut:#4B5B73} /* muted text on a tinted card needs a darker grey to stay readable (4.2:1 became 5.9:1) */
+ .ts-table td{display:block;min-width:0;border:0;padding:0;background:transparent!important;text-align:left}
+ .ts-table td::before{content:attr(data-label);display:block;color:var(--mut);font-size:var(--fs-xs);line-height:1.25;font-weight:400}
+ .ts-table td.nm{grid-area:1/1/2/8;font-size:var(--fs-base)}
+ .ts-table td.st{grid-area:1/8/2/13;justify-self:end;text-align:right}
+ .ts-table td[data-label="Subject"]{grid-area:2/1/3/7;color:var(--mut);font-size:var(--fs-sm)}
+ .ts-table td[data-label="ID"]{grid-area:2/7/3/10;font-size:var(--fs-sm)}
+ .ts-table td[data-label="Row"]{grid-area:2/10/3/13;text-align:right;font-size:var(--fs-sm)}
+ .ts-table td.nm::before,.ts-table td.st::before,.ts-table td[data-label="Subject"]::before{display:none}
+ .ts-table td[data-label="ID"]::before,.ts-table td[data-label="Row"]::before{display:inline;margin-right:4px}
+ .ts-table td[data-label="Teaching hrs/wk"]{grid-area:3/1/4/4}
+ .ts-table td[data-label="Schedule total"]{grid-area:3/4/4/7}
+ .ts-table td[data-label="Homeroom"]{grid-area:3/7/4/10}
+ .ts-table td[data-label="Diff"]{grid-area:3/10/4/13}
+ .ts-table td[data-label="Periods in grid"]{grid-area:4/1/5/4}
+ .ts-table td.st{padding-top:0}
+ /* count strips (Timesheets, Schedules ...) become a tidy two-column grid */
+ .stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+ .stat{background:var(--card);border:0}
+ /* the four ring tiles become a compact 2 x 2 grid */
+ .ov{grid-template-columns:1fr 1fr;gap:10px}
+ .tile{flex-direction:column;align-items:flex-start;gap:var(--sp-2);padding:var(--sp-3)}
+ .ring{width:48px;height:48px}
+ .ring::before{inset:5px}
+ .ring span{font-size:var(--fs-xs)}
+ .tile b{font-size:var(--fs-md)}
+ .tile small{font-size:var(--fs-xs)}
  /* wide tables scroll inside their own box; the page itself never gets wider than the screen */
  #tsOut,#scOut,#tcOut,#hrOut,#adUsers,#adHist{overflow-x:auto}
 }
@@ -533,7 +575,9 @@ async function loadBuf(buf,name){$('msg').textContent='Reading…';EDITS=[];SAVE
  }catch(err){$('msg').textContent='Could not read file: '+err.message}}
 document.getElementById('f').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer();LAST={buf,name:f.name};OPENED=null;CURU=null;loadBuf(buf,f.name)});
 
+let CURTAB='db';
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+ CURTAB=b.dataset.t;renderEditBar();
  document.querySelectorAll('#tabs button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-current',x===b?'page':'false')});
  ['db','ts','tc','sc','hr','ad'].forEach(id=>$(id).classList.toggle('hide',id!==b.dataset.t));if(b.dataset.t==='db')loadActivity();if(b.dataset.t==='ad'&&canAdmin()){loadUsers();loadHistory()}});
 ['mode','tsOnly'].forEach(id=>$(id).onchange=()=>S&&renderTS());
@@ -584,9 +628,10 @@ function renderTS(){
  S.kpi=S.kpi||{};S.kpi.ts={ok,total:S.ts.length};
  S.rep=S.rep||{};S.rep.ts=rows.map(({t,p,s,st})=>({id:t.id,name:t.display,subject:t.subject,declared:t.declared,counted:S.ts.hasGrid?t.counted:null,sched:s,home:s==null?null:(hm[t.name]||0),diff:s==null?null:p-s,status:st}));
  $('tsStats').innerHTML=stat('Teachers',S.ts.length)+stat('Match',ok)+stat('Mismatch',bad)+stat('No schedule',none);
- const list=rows.filter(r=>!$('tsOnly').checked||r.cls!=='grn');
- $('tsOut').innerHTML=`<table><tr><th class="n">Row</th><th>ID</th><th>Name</th><th>Subject</th><th class="n">Teaching hrs/wk</th><th class="n">Periods in grid</th><th class="n">Schedule total</th><th class="n">Homeroom</th><th class="n">Diff</th><th>Status</th></tr>`+
- list.map(({t,p,s,cls,st})=>`<tr class="${cls==='grn'?'':cls}"><td class="n">${t.row}</td><td>${esc(t.id)}</td><td><b>${esc(t.display)}</b></td><td>${esc(t.subject)}</td><td class="n">${t.declared}</td><td class="n">${S.ts.hasGrid?t.counted:'–'}</td><td class="n">${s==null?'–':s}</td><td class="n mut">${s==null?'–':(hm[t.name]||0)}</td><td class="n">${s==null?'–':(p-s>0?'+':'')+(p-s)}</td><td>${pill(cls,st)}</td></tr>`).join('')+'</table>';renderOV()}
+ const list=rows.filter(r=>!$('tsOnly').checked||r.cls!=='grn'),grid=S.ts.hasGrid,H=(l,c)=>`<th scope="col"${c?` class="${c}"`:''}>${l}</th>`;
+ $('tsOut').innerHTML=list.length?`<table class="ts-table" aria-label="Timesheet hours compared with the teacher schedules"><tr class="hd">`+H('Row','n')+H('ID')+H('Name')+H('Subject')+H('Teaching hrs/wk','n')+(grid?H('Periods in grid','n'):'')+H('Schedule total','n')+H('Homeroom','n')+H('Diff','n')+H('Status')+'</tr>'+
+  list.map(({t,p,s,cls,st})=>{const d=s==null?null:p-s;return `<tr class="${cls==='grn'?'':cls}"><td class="n" data-label="Row">${t.row}</td><td data-label="ID">${esc(t.id)}</td><td class="nm" data-label="Name"><b>${esc(t.display)}</b></td><td data-label="Subject">${esc(t.subject)}</td><td class="n" data-label="Teaching hrs/wk">${t.declared}</td>${grid?`<td class="n" data-label="Periods in grid">${t.counted}</td>`:''}<td class="n" data-label="Schedule total">${s==null?'–':s}</td><td class="n mut" data-label="Homeroom">${s==null?'–':(hm[t.name]||0)}</td><td class="n diff${d?' off':''}" data-label="Diff">${d==null?'–':(d>0?'+':'')+d}</td><td class="st" data-label="Status">${pill(cls,st)}</td></tr>`}).join('')+'</table>'
+  :(S.ts.length?'<p class="okn" style="margin:0"><b>No mismatches.</b> All '+S.ts.length+' teachers match their schedule.</p>':'<p class="mut">No teachers were found in the TIMESHEET.</p>');renderOV()}
 
 function xlTeacher(b){
  const hdr='<tr><th>Time</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr>';
@@ -922,8 +967,10 @@ $('saveUp').onclick=async()=>{const b=$('saveUp');if(b.disabled)return;b.disable
 function afterEdit(){renderTS();renderSC();renderTC();renderHR();renderEditBar()}
 function renderEditBar(){const b=$('editBar');
  $('expWb').classList.toggle('hide',!(canEdit()&&S&&CURBUF&&changedCells(S).length>0));
- if(!S||!canArrange()){b.classList.add('hide');return}
- b.classList.remove('hide');const n=EDITS.length,dirty=JSON.stringify(EDITS)!==JSON.stringify(SAVED);
+ const dirty=JSON.stringify(EDITS)!==JSON.stringify(SAVED),here=CURTAB==='tc'||CURTAB==='sc';
+ // shown on the two tabs where classes can be dragged, and anywhere else only while something is unsaved (so Save is never out of reach)
+ if(!S||!canArrange()||!(here||dirty)){b.classList.add('hide');return}
+ b.classList.remove('hide');const n=EDITS.length;
  $('editMsg').innerHTML='<b>Arrange mode (admin)</b>: drag any class onto any slot, in <i>Schedules</i> or <i>Teacher Schedules</i>. It is always placed; clashes with a teacher or a crossed-out slot are shown in red. '+(TOUCHY?'On this device, press and hold a class for a moment, then drag it. ':'')+(n?`${n} change${n>1?'s':''}${dirty?', not saved yet':', saved'}.`:'No changes yet.')+(LASTNOTE?`<br><b>${LASTNOTE}</b>`:'');
  $('undoBtn').disabled=!n;$('saveEdits').disabled=!dirty;$('discardEdits').disabled=!dirty}
 async function tryMove(mv){
